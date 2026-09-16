@@ -1,6 +1,6 @@
 # 大直橋飛機拍攝機會判斷系統：實作計畫
 
-> 狀態：階段 1 已完成並等待 review；尚未開始階段 2。
+> 狀態：階段 2 已完成並等待 review；尚未開始階段 3。
 >
 > 本文件記錄目前討論結果、假設、驗證方式與分段工作項目。確認本文件前，不建立應用程式、資料庫或部署設定。
 
@@ -358,7 +358,10 @@ Aircraft provider ──► Observation collector ──► SQLite
 - `docker compose up` 可由空白環境啟動。
 - 重啟 container 後 SQLite 資料仍存在。
 - 缺少必要 credentials 時能清楚失敗，不洩漏 secret。
+
 - 自動化測試與 lint 可在本機及 container 中執行。
+
+結果：已完成。已驗證本機 migration、測試與 lint，並以 Docker Compose 建置、啟動 `/healthz`、執行 migration 後重啟容器；SQLite schema version 與資料 volume 可持續使用。階段 2 完成後停在此，等待 review。
 
 ### 階段 3：正式資料收集器
 

@@ -1,0 +1,76 @@
+const http = require('node:http')
+const { loadConfig } = require('./config')
+const { openDatabase } = require('./database')
+
+function json (response, statusCode, payload) {
+    const body = JSON.stringify(payload)
+
+    response.writeHead(statusCode, {
+        'content-type': 'application/json; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-length': Buffer.byteLength(body)
+    })
+    response.end(body)
+}
+
+function createServer ({ schemaVersion, now = () => new Date() }) {
+    return http.createServer((request, response) => {
+        const requestUrl = new URL(request.url, 'http://localhost')
+
+        if (request.method === 'GET' && requestUrl.pathname === '/healthz') {
+            return json(response, 200, {
+                status: 'ok',
+                database: 'ok',
+                schemaVersion,
+                checkedAt: now().toISOString()
+            })
+        }
+
+        return json(response, 404, {
+            error: 'not_found'
+        })
+    })
+}
+
+function start (config = loadConfig()) {
+    const opened = openDatabase(config.databasePath)
+    const server = createServer(opened)
+
+    server.on('error', error => {
+        console.error(JSON.stringify({
+            event: 'server-error',
+            message: error.message
+        }))
+    })
+
+    server.listen(config.port, () => {
+        console.log(JSON.stringify({
+            event: 'server-started',
+            port: config.port,
+            databasePath: config.databasePath,
+            schemaVersion: opened.schemaVersion,
+            timezone: config.timezone
+        }))
+    })
+
+    function shutdown (signal) {
+        console.log(JSON.stringify({ event: 'shutdown', signal }))
+        server.close(() => {
+            opened.database.close()
+        })
+    }
+
+    process.once('SIGINT', () => shutdown('SIGINT'))
+    process.once('SIGTERM', () => shutdown('SIGTERM'))
+
+    return { server, database: opened.database }
+}
+
+if (require.main === module) {
+    start()
+}
+
+module.exports = {
+    createServer,
+    start
+}

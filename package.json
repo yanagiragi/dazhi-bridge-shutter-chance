@@ -1,0 +1,23 @@
+{
+    "name": "dazhi-bridge-shutter-chance",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Estimate Songshan Airport takeoff direction for Dazhi Bridge photography",
+    "license": "UNLICENSED",
+    "type": "commonjs",
+    "engines": {
+        "node": ">=22"
+    },
+    "scripts": {
+        "start": "node src/server.js",
+        "migrate": "node src/migrate.js",
+        "test": "node --test",
+        "lint": "eslint src/ test/"
+    },
+    "dependencies": {
+        "better-sqlite3": "^13.0.3"
+    },
+    "devDependencies": {
+        "eslint": "^9.35.0"
+    }
+}

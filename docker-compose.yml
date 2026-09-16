@@ -1,0 +1,28 @@
+name: dazhi-bridge-shutter-chance
+services:
+  app:
+    build: .
+    init: true
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      DATABASE_PATH: /data/dazhi.sqlite
+      TZ: ${TZ:-Asia/Taipei}
+    volumes:
+      - dazhi-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:3000/healthz') .then(response => process.exit(response.ok ? 0 : 1)) .catch(() => process.exit(1))
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  dazhi-data:
