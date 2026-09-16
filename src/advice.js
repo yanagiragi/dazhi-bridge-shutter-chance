@@ -91,10 +91,16 @@ function buildAdvice ({
     recentLimit = RECENT_DEPARTURE_LIMIT
 } = {}) {
     const today = localDateKey(now, timezone)
-    const todayDepartures = departures.filter(departure =>
+    const currentTimestamp = now.getTime()
+    const pastDepartures = departures.filter(departure => {
+        const detectedTimestamp = Date.parse(departure.detected_at)
+        return Number.isFinite(detectedTimestamp) &&
+            detectedTimestamp <= currentTimestamp
+    })
+    const todayDepartures = pastDepartures.filter(departure =>
         localDateKey(new Date(departure.detected_at), timezone) === today
     )
-    const recentDepartures = sortNewestFirst(departures)
+    const recentDepartures = sortNewestFirst(pastDepartures)
         .slice(0, recentLimit)
     const westboundCount = todayDepartures.filter(departure =>
         departure.direction === 'westbound'

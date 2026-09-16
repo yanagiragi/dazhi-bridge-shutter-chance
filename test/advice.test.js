@@ -89,3 +89,21 @@ test('uses Taipei date when UTC crosses midnight', () => {
     assert.equal(advice.date, '2026-09-17')
     assert.equal(advice.today.total, 0)
 })
+
+
+test('ignores departures scheduled after the current time', () => {
+    const advice = buildAdvice({
+        now: NOW,
+        lastSuccessAt: RECENT_SUCCESS,
+        departures: [
+            departure(1, 'eastbound'),
+            {
+                ...departure(0, 'westbound'),
+                detected_at: '2026-09-16T04:01:00.000Z'
+            }
+        ]
+    })
+    assert.equal(advice.today.total, 1)
+    assert.equal(advice.today.westbound, 0)
+    assert.equal(advice.recentDepartures.length, 1)
+})

@@ -52,9 +52,10 @@ function querySnapshot (database, now, timezone, limit) {
         SELECT icao24, callsign, detected_at, direction,
                runway_estimate, detection_confidence, source
         FROM departures
+        WHERE detected_at <= ?
         ORDER BY detected_at DESC
         LIMIT ?
-    `).all(DEPARTURE_QUERY_FETCH_LIMIT)
+    `).all(now.toISOString(), DEPARTURE_QUERY_FETCH_LIMIT)
     const collectorRun = database.prepare(`
         SELECT last_success_at, last_failure_at, last_http_status,
                remaining_credits, last_error, updated_at

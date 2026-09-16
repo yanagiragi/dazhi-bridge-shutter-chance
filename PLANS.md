@@ -434,7 +434,7 @@ Aircraft provider ──► Observation collector ──► SQLite
 - Telegram bot 可用一次請求取得近期航機與信心水準，不必自行重算規則。
 - 公開部署時，未授權請求無法讀取受保護 endpoint。
 
-結果：已完成。已建立 `/api/v1/status` 與 `/api/v1/departures`，共用 advice 判定結果，加入 limit 1-50 驗證、統一錯誤格式與可選 Bearer token 保護。API contract 測試涵蓋有資料、collector 狀態、limit 錯誤與未授權請求。尚未開始階段 7。
+結果：已完成。已建立 `/api/v1/status` 與 `/api/v1/departures`，共用 advice 判定結果，加入 limit 1-50 驗證、統一錯誤格式與可選 Bearer token 保護；拍攝建議只使用臺北今天且不晚於當前時間的航班資料。API contract 測試涵蓋有資料、collector 狀態、limit 錯誤與未授權請求。尚未開始階段 7。
 
 ### 階段 7：網頁看板
 
