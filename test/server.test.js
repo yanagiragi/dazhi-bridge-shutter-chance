@@ -47,3 +47,72 @@ test('unknown endpoint returns JSON 404', async t => {
     assert.equal(response.status, 404)
     assert.deepEqual(await response.json(), { error: 'not_found' })
 })
+
+
+test('status API returns advice and collector state', async t => {
+    const directory = mkdtempSync(join(tmpdir(), 'dazhi-http-'))
+    const opened = openDatabase(join(directory, 'dazhi.sqlite'))
+    const now = new Date('2026-09-16T04:00:00.000Z')
+    opened.database.prepare(`
+        INSERT INTO departures (
+            icao24, callsign, detected_at, direction, runway_estimate,
+            detection_confidence, source, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+        'abc123', null, '2026-09-16T03:59:00.000Z', 'westbound',
+        '28', 'high', 'test', now.toISOString()
+    )
+    opened.database.prepare(`
+        UPDATE collector_runs
+        SET last_success_at = ?, remaining_credits = ?
+        WHERE id = 1
+    `).run('2026-09-16T03:59:30.000Z', 99)
+    const server = createServer({
+        ...opened,
+        timezone: 'Asia/Taipei',
+        now: () => now
+    })
+
+    t.after(() => {
+        server.close()
+        opened.database.close()
+        rmSync(directory, { recursive: true, force: true })
+    })
+    await new Promise(resolve => server.listen(0, resolve))
+    const response = await fetch(
+        `http://127.0.0.1:${server.address().port}/api/v1/status`
+    )
+
+    assert.equal(response.status, 200)
+    const payload = await response.json()
+    assert.equal(payload.advice.today.westbound, 1)
+    assert.equal(payload.advice.confidence, 'low')
+    assert.equal(payload.collector.remaining_credits, 99)
+})
+
+test('departures API validates limit and bearer token', async t => {
+    const directory = mkdtempSync(join(tmpdir(), 'dazhi-http-'))
+    const opened = openDatabase(join(directory, 'dazhi.sqlite'))
+    const server = createServer({
+        ...opened,
+        apiToken: 'telegram-secret'
+    })
+
+    t.after(() => {
+        server.close()
+        opened.database.close()
+        rmSync(directory, { recursive: true, force: true })
+    })
+    await new Promise(resolve => server.listen(0, resolve))
+    const baseUrl = `http://127.0.0.1:${server.address().port}`
+    const unauthorized = await fetch(`${baseUrl}/api/v1/departures`)
+    assert.equal(unauthorized.status, 401)
+    const invalid = await fetch(`${baseUrl}/api/v1/departures?limit=0`, {
+        headers: { authorization: 'Bearer telegram-secret' }
+    })
+    assert.equal(invalid.status, 400)
+    assert.deepEqual(await invalid.json(), {
+        error: 'bad_request',
+        message: 'limit must be a positive integer'
+    })
+})

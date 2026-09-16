@@ -22,7 +22,17 @@ function loadConfig (env = process.env) {
     return {
         port,
         databasePath,
-        timezone: env.TZ || 'Asia/Taipei'
+        timezone: env.TZ || 'Asia/Taipei',
+        apiBearerToken: env.API_BEARER_TOKEN || null,
+        openskyClientId: env.OPENSKY_CLIENT_ID || null,
+        openskyClientSecret: env.OPENSKY_CLIENT_SECRET || null,
+        collectorIntervalMs: positiveInteger(env.COLLECTOR_INTERVAL_MS || '30000', 'COLLECTOR_INTERVAL_MS'),
+        openskyBounds: {
+            lamin: Number(env.OPENSKY_LAMIN || '25.06'),
+            lamax: Number(env.OPENSKY_LAMAX || '25.08'),
+            lomin: Number(env.OPENSKY_LOMIN || '121.54'),
+            lomax: Number(env.OPENSKY_LOMAX || '121.57')
+        }
     }
 }
 
