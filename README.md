@@ -5,10 +5,9 @@ in [PLANS.md](PLANS.md).
 
 ## Current status
 
-Phase 3 includes the OpenSky collector, bounded polling, OAuth token caching,
-retry handling and collector run status. Departure detection, web dashboard and
-Telegram-facing API are not implemented yet. A westbound operating
-session remains a required phase 4 acceptance item.
+The collector supports OpenSky and adsb.fi behind a common aircraft-data interface.
+The selected provider writes the same normalized SQLite observations, so the
+departure detector remains provider-independent.
 
 ## Local setup
 
@@ -32,9 +31,15 @@ Configuration is supplied through environment variables:
 - `PORT`: HTTP port, default `3000`
 - `DATABASE_PATH`: SQLite file path, default `./data/dazhi.sqlite`
 - `TZ`: display and operating timezone, default `Asia/Taipei`
-- `OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET`: optional OpenSky OAuth credentials
+- `AIRCRAFT_DATA_PROVIDER`: `opensky` (default) or `adsbfi`
 - `COLLECTOR_INTERVAL_MS`: polling interval, default `30000`
-- `OPENSKY_LAMIN`, `OPENSKY_LAMAX`, `OPENSKY_LOMIN`, `OPENSKY_LOMAX`: Songshan bounding box
+- `OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET`: optional OpenSky OAuth credentials; used only with `opensky`
+- `OPENSKY_LAMIN`, `OPENSKY_LAMAX`, `OPENSKY_LOMIN`, `OPENSKY_LOMAX`: OpenSky bounding box
+- `ADSB_FI_LATITUDE`, `ADSB_FI_LONGITUDE`, `ADSB_FI_DISTANCE_NM`: adsb.fi point query; defaults to Songshan and 5 NM
+
+For example, set `AIRCRAFT_DATA_PROVIDER=adsbfi` to collect from adsb.fi. Its
+altitude, speed, and climb-rate values are converted from feet, knots, and
+feet per minute to the project’s metre and metre-per-second data model.
 
 The SQLite database is created automatically. The initialization enables WAL mode
 and applies idempotent numbered migrations. The database and all parent directories

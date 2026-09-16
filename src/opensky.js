@@ -7,6 +7,35 @@ const RATE_LIMIT_HEADER = 'x-rate-limit-remaining'
 const DEFAULT_BASE_URL = 'https://opensky-network.org/api'
 const DEFAULT_TOKEN_URL = 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token'
 
+// OpenSky state-vector indexes (defined by the REST API response schema).
+const STATE_ICAO24 = 0
+const STATE_CALLSIGN = 1
+const STATE_LONGITUDE = 5
+const STATE_LATITUDE = 6
+const STATE_BARO_ALTITUDE = 7
+const STATE_ON_GROUND = 8
+const STATE_VELOCITY = 9
+const STATE_TRUE_TRACK = 10
+const STATE_VERTICAL_RATE = 11
+const STATE_GEO_ALTITUDE = 13
+
+function normalizeOpenSkyState (state) {
+    return {
+        icao24: String(state[STATE_ICAO24] || '').toLowerCase(),
+        callsign: state[STATE_CALLSIGN]
+            ? String(state[STATE_CALLSIGN]).trim() || null
+            : null,
+        longitude: state[STATE_LONGITUDE] ?? null,
+        latitude: state[STATE_LATITUDE] ?? null,
+        baroAltitude: state[STATE_BARO_ALTITUDE] ?? null,
+        geoAltitude: state[STATE_GEO_ALTITUDE] ?? null,
+        velocity: state[STATE_VELOCITY] ?? null,
+        trueTrack: state[STATE_TRUE_TRACK] ?? null,
+        verticalRate: state[STATE_VERTICAL_RATE] ?? null,
+        onGround: state[STATE_ON_GROUND] ? 1 : 0
+    }
+}
+
 class OpenSkyClient {
     constructor ({
         clientId,
@@ -100,6 +129,14 @@ class OpenSkyClient {
         }
     }
 
+    async getAircraft (bounds = {}) {
+        const result = await this.getStates(bounds)
+        return {
+            aircraft: result.states.map(normalizeOpenSkyState),
+            remainingCredits: result.remainingCredits
+        }
+    }
+
     async request (url, options = {}) {
         const controller = new AbortController()
         const timer = setTimeout(
@@ -129,5 +166,6 @@ class OpenSkyClient {
 }
 
 module.exports = {
-    OpenSkyClient
+    OpenSkyClient,
+    normalizeOpenSkyState
 }

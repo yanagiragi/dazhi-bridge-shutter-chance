@@ -1,15 +1,3 @@
-// OpenSky state-vector indexes (defined by the REST API response schema).
-const STATE_ICAO24 = 0
-const STATE_CALLSIGN = 1
-const STATE_LONGITUDE = 5
-const STATE_LATITUDE = 6
-const STATE_BARO_ALTITUDE = 7
-const STATE_ON_GROUND = 8
-const STATE_VELOCITY = 9
-const STATE_TRUE_TRACK = 10
-const STATE_VERTICAL_RATE = 11
-const STATE_GEO_ALTITUDE = 13
-
 // Retry policy and status codes: finite retries with a short linear backoff.
 const DEFAULT_MAX_RETRIES = 2
 const DEFAULT_RETRY_DELAY_MS = 250
@@ -43,19 +31,19 @@ const UPDATE_RUN_SQL = `
     WHERE id = 1
 `
 
-function normalizeState (state, observedAt) {
+function normalizeAircraft (aircraft, observedAt) {
     return {
         observedAt,
-        icao24: String(state[STATE_ICAO24] || '').toLowerCase(),
-        callsign: state[STATE_CALLSIGN] ? String(state[STATE_CALLSIGN]).trim() || null : null,
-        longitude: state[STATE_LONGITUDE] ?? null,
-        latitude: state[STATE_LATITUDE] ?? null,
-        baroAltitude: state[STATE_BARO_ALTITUDE] ?? null,
-        onGround: state[STATE_ON_GROUND] ? 1 : 0,
-        velocity: state[STATE_VELOCITY] ?? null,
-        trueTrack: state[STATE_TRUE_TRACK] ?? null,
-        verticalRate: state[STATE_VERTICAL_RATE] ?? null,
-        geoAltitude: state[STATE_GEO_ALTITUDE] ?? null
+        icao24: String(aircraft.icao24 || '').toLowerCase(),
+        callsign: aircraft.callsign ?? null,
+        longitude: aircraft.longitude ?? null,
+        latitude: aircraft.latitude ?? null,
+        baroAltitude: aircraft.baroAltitude ?? null,
+        onGround: aircraft.onGround ? 1 : 0,
+        velocity: aircraft.velocity ?? null,
+        trueTrack: aircraft.trueTrack ?? null,
+        verticalRate: aircraft.verticalRate ?? null,
+        geoAltitude: aircraft.geoAltitude ?? null
     }
 }
 
@@ -99,18 +87,18 @@ class Collector {
 
     async collect (params) {
         const observedAt = this.now().toISOString()
-        const result = await this.provider.getStates(params)
+        const result = await this.provider.getAircraft(params)
 
-        const insertMany = this.database.transaction(states => {
-            return states
-                .filter(state => state && state[STATE_ICAO24])
-                .map(state => this.insertObservation.run({
-                    ...normalizeState(state, observedAt),
+        const insertMany = this.database.transaction(aircraft => {
+            return aircraft
+                .filter(item => item && item.icao24)
+                .map(item => this.insertObservation.run({
+                    ...normalizeAircraft(item, observedAt),
                     source: this.source
                 }))
         })
 
-        insertMany(result.states)
+        insertMany(result.aircraft)
         this.updateRun.run({
             success: observedAt,
             failure: null,
@@ -122,7 +110,7 @@ class Collector {
 
         return {
             observedAt,
-            count: result.states.length,
+            count: result.aircraft.length,
             remainingCredits: result.remainingCredits
         }
     }
@@ -150,5 +138,5 @@ class Collector {
 
 module.exports = {
     Collector,
-    normalizeState
+    normalizeAircraft
 }

@@ -1,9 +1,14 @@
 const { readFileSync } = require('node:fs')
 const { join } = require('node:path')
 const http = require('node:http')
-const { loadConfig } = require('./config')
+const {
+    AIRCRAFT_PROVIDER_ADSB_FI,
+    AIRCRAFT_PROVIDER_OPENSKY,
+    loadConfig
+} = require('./config')
 const { openDatabase } = require('./database')
 const { OpenSkyClient } = require('./opensky')
+const { AdsbFiClient } = require('./adsbfi')
 const { Collector } = require('./collector')
 const { startScheduler } = require('./scheduler')
 const { buildAdvice } = require('./advice')
@@ -183,11 +188,28 @@ function createServer ({
 }
 
 function createCollector (config, database) {
-    const provider = new OpenSkyClient({
-        clientId: config.openskyClientId,
-        clientSecret: config.openskyClientSecret
+    let provider
+
+    if (config.aircraftDataProvider === AIRCRAFT_PROVIDER_OPENSKY) {
+        provider = new OpenSkyClient({
+            clientId: config.openskyClientId,
+            clientSecret: config.openskyClientSecret
+        })
+    } else if (config.aircraftDataProvider === AIRCRAFT_PROVIDER_ADSB_FI) {
+        provider = new AdsbFiClient()
+    }
+
+    return new Collector({
+        database,
+        provider,
+        source: config.aircraftDataProvider
     })
-    return new Collector({ database, provider })
+}
+
+function collectionParams (config) {
+    return config.aircraftDataProvider === AIRCRAFT_PROVIDER_ADSB_FI
+        ? config.adsbFiPoint
+        : config.openskyBounds
 }
 
 function start (config = loadConfig()) {
@@ -203,7 +225,7 @@ function start (config = loadConfig()) {
     const collector = createCollector(config, opened.database)
     const scheduler = startScheduler({
         intervalMs: config.collectorIntervalMs,
-        task: () => collector.runOnce(config.openskyBounds)
+        task: () => collector.runOnce(collectionParams(config))
             .catch(error => console.error(JSON.stringify({
                 event: 'collector-error',
                 message: error.message
@@ -243,5 +265,7 @@ module.exports = {
     createServer,
     start,
     parseLimit,
-    querySnapshot
+    querySnapshot,
+    createCollector,
+    collectionParams
 }
