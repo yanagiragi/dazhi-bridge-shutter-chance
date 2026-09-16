@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dazhi Bridge Flight Watch</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script defer src="/app.js"></script>
+</head>
+<body>
+    <main class="shell">
+        <header class="topbar">
+            <div>
+                <h1 data-i18n="title">Dazhi Bridge Flight Watch</h1>
+                <p class="live">
+                    <span class="dot"></span>
+                    <span data-i18n="live">Live data</span>
+                    <span id="updated">--</span>
+                </p>
+            </div>
+            <button
+                id="language"
+                class="language"
+                type="button"
+                aria-label="Switch language"
+            >
+                EN
+            </button>
+        </header>
+
+        <section
+            id="recommendation"
+            class="recommendation"
+            aria-live="polite"
+        >
+            <div class="direction-icon" id="direction-icon">&larr;</div>
+            <div>
+                <p class="eyebrow" data-i18n="recommendation">
+                    Recommendation
+                </p>
+                <h2 id="recommendation-title">--</h2>
+                <p id="recommendation-reason">--</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 data-i18n="today">Today</h2>
+            <div class="stats">
+                <div>
+                    <span data-i18n="westbound">Westbound</span>
+                    <strong id="westbound">--</strong>
+                </div>
+                <div>
+                    <span data-i18n="eastbound">Eastbound</span>
+                    <strong id="eastbound">--</strong>
+                </div>
+                <div>
+                    <span data-i18n="unknown">Unknown</span>
+                    <strong id="unknown">--</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 data-i18n="recent">Recent departures</h2>
+            <div id="departures" class="departures">
+                <p class="muted" data-i18n="loading">Loading...</p>
+            </div>
+        </section>
+
+        <footer>
+            <span data-i18n="source">Source</span>: OpenSky
+            |
+            <span data-i18n="lastUpdated">Last updated</span>
+            <span id="footer-updated">--</span>
+        </footer>
+    </main>
+</body>
+</html>

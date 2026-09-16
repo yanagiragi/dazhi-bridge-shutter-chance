@@ -3,6 +3,13 @@ const DEFAULT_PORT = 3000
 
 const path = require('node:path')
 
+function booleanSetting (value, name, fallback) {
+    if (value === undefined || value === '') return fallback
+    if (value === 'true' || value === '1') return true
+    if (value === 'false' || value === '0') return false
+    throw new Error(`${name} must be true or false`)
+}
+
 function positiveInteger (value, name) {
     const parsed = Number(value)
 
@@ -24,6 +31,8 @@ function loadConfig (env = process.env) {
         databasePath,
         timezone: env.TZ || 'Asia/Taipei',
         apiBearerToken: env.API_BEARER_TOKEN || null,
+        webEnabled: booleanSetting(env.WEB_ENABLED, 'WEB_ENABLED', true),
+        apiEnabled: booleanSetting(env.API_ENABLED, 'API_ENABLED', true),
         openskyClientId: env.OPENSKY_CLIENT_ID || null,
         openskyClientSecret: env.OPENSKY_CLIENT_SECRET || null,
         collectorIntervalMs: positiveInteger(env.COLLECTOR_INTERVAL_MS || '30000', 'COLLECTOR_INTERVAL_MS'),

@@ -1,3 +1,14 @@
+const sharedRules = {
+    eqeqeq: ['error', 'always'],
+    'no-const-assign': 'error',
+    'no-dupe-keys': 'error',
+    'no-duplicate-case': 'error',
+    'no-unreachable': 'error',
+    'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    quotes: ['error', 'single', { avoidEscape: true }],
+    semi: ['error', 'never']
+}
+
 module.exports = [
     {
         files: ['src/**/*.js', 'test/**/*.js'],
@@ -15,15 +26,20 @@ module.exports = [
                 require: 'readonly'
             }
         },
-        rules: {
-            eqeqeq: ['error', 'always'],
-            'no-const-assign': 'error',
-            'no-dupe-keys': 'error',
-            'no-duplicate-case': 'error',
-            'no-unreachable': 'error',
-            'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-            quotes: ['error', 'single', { avoidEscape: true }],
-            semi: ['error', 'never']
-        }
+        rules: sharedRules
+    },
+    {
+        files: ['public/**/*.js'],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'script',
+            globals: {
+                document: 'readonly',
+                fetch: 'readonly',
+                localStorage: 'readonly',
+                setInterval: 'readonly'
+            }
+        },
+        rules: sharedRules
     }
 ]

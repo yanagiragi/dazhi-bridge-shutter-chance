@@ -1,3 +1,5 @@
+const { readFileSync } = require('node:fs')
+const { join } = require('node:path')
 const http = require('node:http')
 const { loadConfig } = require('./config')
 const { openDatabase } = require('./database')
@@ -18,6 +20,7 @@ const MAX_DEPARTURE_QUERY_LIMIT = 50
 
 // Fetch enough history for advice statistics while keeping each request bounded.
 const DEPARTURE_QUERY_FETCH_LIMIT = 500
+const PUBLIC_ROOT = join(__dirname, '..', 'public')
 
 function json (response, statusCode, payload) {
     const body = JSON.stringify(payload)
@@ -80,11 +83,42 @@ function createServer ({
     database,
     timezone = 'Asia/Taipei',
     apiToken = null,
+    webEnabled = true,
+    apiEnabled = true,
     now = () => new Date()
 }) {
     return http.createServer((request, response) => {
         const requestUrl = new URL(request.url, 'http://localhost')
         const isApiRequest = requestUrl.pathname.startsWith('/api/v1/')
+        const staticAssets = {
+            '/': ['index.html', 'text/html; charset=utf-8'],
+            '/index.html': ['index.html', 'text/html; charset=utf-8'],
+            '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
+            '/styles.css': ['styles.css', 'text/css; charset=utf-8'],
+            '/locales/en.json': [
+                'locales/en.json',
+                'application/json; charset=utf-8'
+            ],
+            '/locales/zh-TW.json': [
+                'locales/zh-TW.json',
+                'application/json; charset=utf-8'
+            ]
+        }
+        const staticAsset = staticAssets[requestUrl.pathname]
+        if (webEnabled && request.method === 'GET' && staticAsset) {
+            const body = readFileSync(join(PUBLIC_ROOT, staticAsset[0]))
+            response.writeHead(HTTP_OK, {
+                'content-type': staticAsset[1],
+                'cache-control': 'no-cache'
+            })
+            response.end(body)
+            return
+        }
+
+
+        if (isApiRequest && !apiEnabled) {
+            return json(response, HTTP_NOT_FOUND, { error: 'not_found' })
+        }
 
         if (isApiRequest && !authorized(request, apiToken)) {
             return json(response, HTTP_UNAUTHORIZED, {
@@ -162,7 +196,9 @@ function start (config = loadConfig()) {
         ...opened,
         database: opened.database,
         timezone: config.timezone,
-        apiToken: config.apiBearerToken
+        apiToken: config.apiBearerToken,
+        webEnabled: config.webEnabled,
+        apiEnabled: config.apiEnabled,
     })
     const collector = createCollector(config, opened.database)
     const scheduler = startScheduler({

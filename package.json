@@ -12,7 +12,7 @@
         "start": "node src/server.js",
         "migrate": "node src/migrate.js",
         "test": "node --test",
-        "lint": "eslint src/ test/"
+        "lint": "eslint src/ test/ public/"
     },
     "dependencies": {
         "better-sqlite3": "^13.0.3"

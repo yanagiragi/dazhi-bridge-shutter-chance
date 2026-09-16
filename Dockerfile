@@ -10,6 +10,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY src ./src
+COPY public ./public
 COPY README.md PLANS.md ./
 
 FROM node:24-bookworm-slim

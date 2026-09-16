@@ -116,3 +116,52 @@ test('departures API validates limit and bearer token', async t => {
         message: 'limit must be a positive integer'
     })
 })
+
+
+test('dashboard serves the localized web shell', async t => {
+    const directory = mkdtempSync(join(tmpdir(), 'dazhi-http-'))
+    const opened = openDatabase(join(directory, 'dazhi.sqlite'))
+    const server = createServer(opened)
+
+    t.after(() => {
+        server.close()
+        opened.database.close()
+        rmSync(directory, { recursive: true, force: true })
+    })
+    await new Promise(resolve => server.listen(0, resolve))
+    const response = await fetch(
+        `http://127.0.0.1:${server.address().port}/`
+    )
+    assert.equal(response.status, 200)
+    assert.match(await response.text(), /Dazhi Bridge Flight Watch/)
+
+    const localeResponse = await fetch(
+        `http://127.0.0.1:${server.address().port}/locales/zh-TW.json`
+    )
+    assert.equal(localeResponse.status, 200)
+    assert.equal(
+        (await localeResponse.json()).title,
+        '大直橋拍攝機會'
+    )
+})
+
+
+test('web and API can be disabled independently', async t => {
+    const directory = mkdtempSync(join(tmpdir(), 'dazhi-http-'))
+    const opened = openDatabase(join(directory, 'dazhi.sqlite'))
+    const server = createServer({
+        ...opened,
+        webEnabled: false,
+        apiEnabled: true
+    })
+
+    t.after(() => {
+        server.close()
+        opened.database.close()
+        rmSync(directory, { recursive: true, force: true })
+    })
+    await new Promise(resolve => server.listen(0, resolve))
+    const baseUrl = `http://127.0.0.1:${server.address().port}`
+    assert.equal((await fetch(`${baseUrl}/`)).status, 404)
+    assert.equal((await fetch(`${baseUrl}/api/v1/status`)).status, 200)
+})

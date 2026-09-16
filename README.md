@@ -63,4 +63,9 @@ docker compose config
 
 - `GET /api/v1/status`: today summary, recommendation, freshness and collector state.
 - `GET /api/v1/departures?limit=10`: recent departures with the same recommendation payload. `limit` accepts 1-50.
-- Set `API_BEARER_TOKEN` to require `Authorization: Bearer <token>` on both API routes. `/healthz` remains public.
+- Set `API_BEARER_TOKEN` to require `Authorization: Bearer <token>` on API routes. `/healthz` remains public.
+- `WEB_ENABLED` and `API_ENABLED` independently enable the public dashboard and API (both default to `true`).
+
+## Web dashboard
+
+Open `http://127.0.0.1:3000/` for the mobile-first dashboard. The interface supports Traditional Chinese and English; use the language button in the header. It reads the same `/api/v1/status` result as the Telegram integration.
