@@ -1,3 +1,7 @@
+// HTTP response codes used by the built-in server.
+const HTTP_OK = 200
+const HTTP_NOT_FOUND = 404
+
 const http = require('node:http')
 const { loadConfig } = require('./config')
 const { openDatabase } = require('./database')
@@ -21,7 +25,7 @@ function createServer ({ schemaVersion, now = () => new Date() }) {
         const requestUrl = new URL(request.url, 'http://localhost')
 
         if (request.method === 'GET' && requestUrl.pathname === '/healthz') {
-            return json(response, 200, {
+            return json(response, HTTP_OK, {
                 status: 'ok',
                 database: 'ok',
                 schemaVersion,
@@ -29,7 +33,7 @@ function createServer ({ schemaVersion, now = () => new Date() }) {
             })
         }
 
-        return json(response, 404, {
+        return json(response, HTTP_NOT_FOUND, {
             error: 'not_found'
         })
     })

@@ -12,6 +12,9 @@ const MEDIUM_CONFIDENCE_MIN_SAMPLES = 3
 // Westbound share thresholds, expressed as ratios in the inclusive range [0, 1].
 const HIGH_WESTBOUND_RATIO = 0.6
 const MEDIUM_WESTBOUND_RATIO = 0.5
+// Percentage conversion used only for human-readable reason text.
+const PERCENT_SCALE = 100
+
 
 function localDateKey (date, timezone) {
     // en-CA gives a stable ISO-like year/month/day representation.
@@ -60,7 +63,7 @@ function recommendationFor ({ westboundCount, totalCount, freshness }) {
         return {
             recommendation: 'good-opportunity',
             confidence: 'high',
-            reason: `Today westbound share is ${Math.round(ratio * 100)}%`
+            reason: `Today westbound share is ${Math.round(ratio * PERCENT_SCALE)}%`
         }
     }
 
@@ -69,7 +72,7 @@ function recommendationFor ({ westboundCount, totalCount, freshness }) {
         return {
             recommendation: 'possible-opportunity',
             confidence: 'medium',
-            reason: `Recent westbound share is ${Math.round(ratio * 100)}%`
+            reason: `Recent westbound share is ${Math.round(ratio * PERCENT_SCALE)}%`
         }
     }
 

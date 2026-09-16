@@ -1,6 +1,11 @@
+// Request timeout and OAuth token settings are milliseconds/seconds used by the provider.
+const DEFAULT_REQUEST_TIMEOUT_MS = 10000
+const DEFAULT_TOKEN_LIFETIME_SECONDS = 300
+const TOKEN_REFRESH_MARGIN_MS = 30000
+const RATE_LIMIT_HEADER = 'x-rate-limit-remaining'
+
 const DEFAULT_BASE_URL = 'https://opensky-network.org/api'
 const DEFAULT_TOKEN_URL = 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token'
-const TOKEN_REFRESH_MARGIN_MS = 30000
 
 class OpenSkyClient {
     constructor ({
@@ -9,7 +14,7 @@ class OpenSkyClient {
         fetchImpl = fetch,
         baseUrl = DEFAULT_BASE_URL,
         tokenUrl = DEFAULT_TOKEN_URL,
-        timeoutMs = 10000
+        timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS
     } = {}) {
         this.clientId = clientId
         this.clientSecret = clientSecret
@@ -53,7 +58,7 @@ class OpenSkyClient {
 
         this.token = {
             value: payload.access_token,
-            expiresAt: Date.now() + Number(payload.expires_in || 300) * 1000
+            expiresAt: Date.now() + Number(payload.expires_in || DEFAULT_TOKEN_LIFETIME_SECONDS) * 1000
         }
 
         return this.token.value
@@ -75,7 +80,7 @@ class OpenSkyClient {
                 : {}
         })
 
-        const remaining = response.headers.get('x-rate-limit-remaining')
+        const remaining = response.headers.get(RATE_LIMIT_HEADER)
         if (!response.ok) {
             const error = new Error(
                 `OpenSky states request failed: HTTP ${response.status}`

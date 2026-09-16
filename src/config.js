@@ -1,3 +1,6 @@
+// Default HTTP port for local and container deployments.
+const DEFAULT_PORT = 3000
+
 const path = require('node:path')
 
 function positiveInteger (value, name) {
@@ -11,7 +14,7 @@ function positiveInteger (value, name) {
 }
 
 function loadConfig (env = process.env) {
-    const port = positiveInteger(env.PORT || '3000', 'PORT')
+    const port = positiveInteger(env.PORT || String(DEFAULT_PORT), 'PORT')
     const databasePath = path.resolve(
         env.DATABASE_PATH || './data/dazhi.sqlite'
     )

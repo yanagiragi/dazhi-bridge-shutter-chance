@@ -1,3 +1,6 @@
+// SQLite waits briefly for another writer before returning SQLITE_BUSY (milliseconds).
+const SQLITE_BUSY_TIMEOUT_MS = 5000
+
 const Database = require('better-sqlite3')
 const { dirname } = require('node:path')
 const { mkdirSync } = require('node:fs')
@@ -9,7 +12,7 @@ function openDatabase (filename) {
     const database = new Database(filename)
     database.pragma('journal_mode = WAL')
     database.pragma('foreign_keys = ON')
-    database.pragma('busy_timeout = 5000')
+    database.pragma(`busy_timeout = ${SQLITE_BUSY_TIMEOUT_MS}`)
     const schemaVersion = applyMigrations(database)
 
     return {

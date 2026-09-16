@@ -1,3 +1,23 @@
+// OpenSky state-vector indexes (defined by the REST API response schema).
+const STATE_ICAO24 = 0
+const STATE_CALLSIGN = 1
+const STATE_LONGITUDE = 5
+const STATE_LATITUDE = 6
+const STATE_BARO_ALTITUDE = 7
+const STATE_ON_GROUND = 8
+const STATE_VELOCITY = 9
+const STATE_TRUE_TRACK = 10
+const STATE_VERTICAL_RATE = 11
+const STATE_GEO_ALTITUDE = 13
+
+// Retry policy and status codes: finite retries with a short linear backoff.
+const DEFAULT_MAX_RETRIES = 2
+const DEFAULT_RETRY_DELAY_MS = 250
+const HTTP_OK = 200
+const HTTP_TOO_MANY_REQUESTS = 429
+const HTTP_SERVER_ERROR_MIN = 500
+const MAX_RECORDED_ERROR_LENGTH = 500
+
 const { setTimeout: delay } = require('node:timers/promises')
 
 const INSERT_OBSERVATION_SQL = `
@@ -26,16 +46,16 @@ const UPDATE_RUN_SQL = `
 function normalizeState (state, observedAt) {
     return {
         observedAt,
-        icao24: String(state[0] || '').toLowerCase(),
-        callsign: state[1] ? String(state[1]).trim() || null : null,
-        longitude: state[5] ?? null,
-        latitude: state[6] ?? null,
-        baroAltitude: state[7] ?? null,
-        onGround: state[8] ? 1 : 0,
-        velocity: state[9] ?? null,
-        trueTrack: state[10] ?? null,
-        verticalRate: state[11] ?? null,
-        geoAltitude: state[13] ?? null
+        icao24: String(state[STATE_ICAO24] || '').toLowerCase(),
+        callsign: state[STATE_CALLSIGN] ? String(state[STATE_CALLSIGN]).trim() || null : null,
+        longitude: state[STATE_LONGITUDE] ?? null,
+        latitude: state[STATE_LATITUDE] ?? null,
+        baroAltitude: state[STATE_BARO_ALTITUDE] ?? null,
+        onGround: state[STATE_ON_GROUND] ? 1 : 0,
+        velocity: state[STATE_VELOCITY] ?? null,
+        trueTrack: state[STATE_TRUE_TRACK] ?? null,
+        verticalRate: state[STATE_VERTICAL_RATE] ?? null,
+        geoAltitude: state[STATE_GEO_ALTITUDE] ?? null
     }
 }
 
@@ -44,8 +64,8 @@ class Collector {
         database,
         provider,
         now = () => new Date(),
-        maxRetries = 2,
-        retryDelayMs = 250,
+        maxRetries = DEFAULT_MAX_RETRIES,
+        retryDelayMs = DEFAULT_RETRY_DELAY_MS,
         source = 'opensky'
     }) {
         this.database = database
@@ -83,7 +103,7 @@ class Collector {
 
         const insertMany = this.database.transaction(states => {
             return states
-                .filter(state => state && state[0])
+                .filter(state => state && state[STATE_ICAO24])
                 .map(state => this.insertObservation.run({
                     ...normalizeState(state, observedAt),
                     source: this.source
@@ -94,7 +114,7 @@ class Collector {
         this.updateRun.run({
             success: observedAt,
             failure: null,
-            status: 200,
+            status: HTTP_OK,
             credits: result.remainingCredits,
             error: null,
             updated: observedAt
@@ -109,8 +129,8 @@ class Collector {
 
     shouldRetry (error, attempt) {
         const retryable = !error.status ||
-            error.status === 429 ||
-            error.status >= 500
+            error.status === HTTP_TOO_MANY_REQUESTS ||
+            error.status >= HTTP_SERVER_ERROR_MIN
 
         return retryable && attempt < this.maxRetries
     }
@@ -122,7 +142,7 @@ class Collector {
             failure: failedAt,
             status: error.status || null,
             credits: null,
-            error: error.message.slice(0, 500),
+            error: error.message.slice(0, MAX_RECORDED_ERROR_LENGTH),
             updated: failedAt
         })
     }
