@@ -1,6 +1,8 @@
 # 大直橋飛機拍攝機會判斷系統：實作計畫
 
-> 狀態：階段 2 已完成並等待 review；尚未開始階段 3。
+> 狀態：階段 3 已完成並等待 review；尚未開始階段 4。
+>
+> 階段 4 的實際向西起飛樣本仍是必要驗收項目。
 >
 > 本文件記錄目前討論結果、假設、驗證方式與分段工作項目。確認本文件前，不建立應用程式、資料庫或部署設定。
 
@@ -378,6 +380,8 @@ Aircraft provider ──► Observation collector ──► SQLite
 - 以 mock API 驗證 token 更新、逾時、429、5xx 及畸形回應。
 - 連續實跑至少一個觀察時段，無重疊請求、無無限重試，額度消耗符合估算。
 - OpenSky 暫時中斷後能自行恢復。
+
+結果：已完成。已加入 OpenSky provider（OAuth token 快取、timeout、回應驗證）、collector（狀態保存、429/5xx/網路錯誤有限重試）與防重疊 scheduler；mock 測試涵蓋 token 快取、429 重試、觀測寫入、collector_runs 狀態與排程不重疊。尚未開始階段 4。
 
 ### 階段 4：起飛事件與方向判定
 

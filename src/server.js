@@ -1,6 +1,9 @@
 const http = require('node:http')
 const { loadConfig } = require('./config')
 const { openDatabase } = require('./database')
+const { OpenSkyClient } = require('./opensky')
+const { Collector } = require('./collector')
+const { startScheduler } = require('./scheduler')
 
 function json (response, statusCode, payload) {
     const body = JSON.stringify(payload)
@@ -32,9 +35,30 @@ function createServer ({ schemaVersion, now = () => new Date() }) {
     })
 }
 
+function createCollector (config, database) {
+    const provider = new OpenSkyClient({
+        clientId: config.openskyClientId,
+        clientSecret: config.openskyClientSecret
+    })
+
+    return new Collector({
+        database,
+        provider
+    })
+}
+
 function start (config = loadConfig()) {
     const opened = openDatabase(config.databasePath)
     const server = createServer(opened)
+    const collector = createCollector(config, opened.database)
+    const scheduler = startScheduler({
+        intervalMs: config.collectorIntervalMs,
+        task: () => collector.runOnce(config.openskyBounds)
+            .catch(error => console.error(JSON.stringify({
+                event: 'collector-error',
+                message: error.message
+            })))
+    })
 
     server.on('error', error => {
         console.error(JSON.stringify({
@@ -55,6 +79,7 @@ function start (config = loadConfig()) {
 
     function shutdown (signal) {
         console.log(JSON.stringify({ event: 'shutdown', signal }))
+        scheduler.stop()
         server.close(() => {
             opened.database.close()
         })
@@ -63,7 +88,11 @@ function start (config = loadConfig()) {
     process.once('SIGINT', () => shutdown('SIGINT'))
     process.once('SIGTERM', () => shutdown('SIGTERM'))
 
-    return { server, database: opened.database }
+    return {
+        server,
+        database: opened.database,
+        scheduler
+    }
 }
 
 if (require.main === module) {

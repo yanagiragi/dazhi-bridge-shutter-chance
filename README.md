@@ -5,8 +5,9 @@ in [PLANS.md](PLANS.md).
 
 ## Current status
 
-Phase 2 is the project skeleton only. The collector, departure detector, web
-dashboard and Telegram-facing API are not implemented yet. A westbound operating
+Phase 3 includes the OpenSky collector, bounded polling, OAuth token caching,
+retry handling and collector run status. Departure detection, web dashboard and
+Telegram-facing API are not implemented yet. A westbound operating
 session remains a required phase 4 acceptance item.
 
 ## Local setup
@@ -31,6 +32,9 @@ Configuration is supplied through environment variables:
 - `PORT`: HTTP port, default `3000`
 - `DATABASE_PATH`: SQLite file path, default `./data/dazhi.sqlite`
 - `TZ`: display and operating timezone, default `Asia/Taipei`
+- `OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET`: optional OpenSky OAuth credentials
+- `COLLECTOR_INTERVAL_MS`: polling interval, default `30000`
+- `OPENSKY_LAMIN`, `OPENSKY_LAMAX`, `OPENSKY_LOMIN`, `OPENSKY_LOMAX`: Songshan bounding box
 
 The SQLite database is created automatically. The initialization enables WAL mode
 and applies idempotent numbered migrations. The database and all parent directories
