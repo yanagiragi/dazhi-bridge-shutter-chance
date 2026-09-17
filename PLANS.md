@@ -1,6 +1,6 @@
 # 大直橋飛機拍攝機會判斷系統：實作計畫
 
-> 狀態：階段 7 已完成並等待 review；尚未開始階段 8。
+> 狀態：階段 7 已完成；階段 7.5（不使用 OpenSky 的可行性驗證）進行中，階段 8 暫緩。
 >
 > 真實向西起飛樣本尚未取得，仍是階段 4 的必要現場驗收項目。
 >
@@ -453,21 +453,70 @@ Aircraft provider ──► Observation collector ──► SQLite
 
 結果：已完成。已建立手機優先網頁看板，顯示建議、今日方向統計、最近起飛與資料新鮮度；支援 English／繁體中文切換，並直接使用既有 API advice 結果；`WEB_ENABLED` 與 `API_ENABLED` 可獨立控制網頁與 API。已加入靜態頁面 smoke test。尚未開始階段 8。
 
+### 階段 7.5：確認不使用 OpenSky 的可行性
+
+目標：優先評估以 adsb.fi 取代 OpenSky，避免正式服務因 OpenSky 使用條款而產生不確定性。本階段只驗證資料可用性與 API 欄位；資料來源的授權、署名與再發布條件仍須依當時官方條款另行確認。
+
+工作：
+
+- 在松山機場有實際航班運作的時段，以預定部署間隔查詢 adsb.fi，保存僅供驗證的短期樣本。
+- 檢查低空與跑道附近覆蓋：是否能取得連續位置、合理的觀測間隔，以及足以辨識離地後航跡的高度與爬升率。
+- 確認 API 對每筆目標航機提供或可合理缺省處理的欄位：ICAO24、callsign、經緯度、氣壓／幾何高度、地速、true track、垂直速率與地面狀態。
+- 將 adsb.fi 轉換後的 canonical observation 餵入既有 detector，與人工觀察或可信航跡畫面比對起飛事件與東西方向。
+- 記錄無位置、欄位缺失、資料延遲、請求失敗與疑似漏班，據此調整查詢中心、半徑與輪詢間隔。
+- 確認候選資料來源的自動化收集、公開顯示與再發布條件；定義公開 departure 欄位 allowlist、必要 attribution 與資料保存限制。
+
+驗收：
+
+- 至少蒐集並人工檢視 10 個松山候選起飛事件；每個事件都能判斷資料是否足以支持或拒絕方向判定。
+- 對可判定事件，adsb.fi 的低空航跡、爬升率與方向證據足以讓既有 detector 產生合理結果；缺欄位時系統會安全地輸出 `unknown` 或略過，不會誤判。
+- 決定並記錄後續正式 collector 使用 adsb.fi、保留 OpenSky 備援，或改評估其他來源；未完成此決策前，不把 OpenSky 視為正式部署的預設來源。
+- 使用者確認資料來源的適用條款、公開欄位 allowlist 與必要 attribution 後，才進入階段 8。
+
+結果：進行中。第一輪 30 分鐘實測共 360 次成功請求，已以官方離站資料人工確認 CI220／CAL220 的松山 eastbound 起飛航跡；adsb.fi 從距 RCSS 0.762 NM、氣壓高度 450 ft 起提供連續資料，現有 detector 在 3、5、10 NM 範圍均正確輸出 high-confidence eastbound。階段門檻目前為 1／10 筆，仍需 westbound 與不同機型樣本。詳見 [`spike/ADSB_FI_RESULTS.md`](spike/ADSB_FI_RESULTS.md)。
+
 ### 階段 8：長時間運作與部署驗證
 
 工作：
 
 - 補齊 graceful shutdown、結構化日誌、資料清理與 SQLite 備份說明。
+- 實作 `COLLECTOR_ACTIVE_TIME_ZONE`、`COLLECTOR_ACTIVE_START` 與 `COLLECTOR_ACTIVE_END`；收集時段外停止 polling，進入時段後立即收集。
+- 將時段外狀態統一表示為 `outside_schedule`，讓自架網頁、API 與未來的靜態快照可區分預期暫停、資料過期與真正收集器故障。
 - 確認 container 重啟、主機重啟與短暫斷網後能恢復。
 - 限制日誌與 observation 資料成長。
-- 完成 README、設定範例、部署及故障排除文件。
+- 完成 README、設定範例、部署及故障排除文件，包含家中主機的持久化 SQLite 部署，以及未來搬移 VPS 時重新 clone、還原備份的流程。
 
 驗收：
 
 - 使用 Docker Compose 連續運作至少 24 小時。
 - 額度消耗、資料庫成長及記憶體使用沒有明顯異常。
-- 模擬 OpenSky 失敗、token 過期及 SQLite 重啟後，服務可恢復且不製造重複 departure。
+- 驗證收集時段進出行為：時段外無 polling、狀態為 `outside_schedule` 且不被視為故障；進入時段後立即恢復收集。
+- 模擬所選資料來源失敗（若使用 OpenSky，另包含 token 過期）及 SQLite 重啟後，服務可恢復且不製造重複 departure。
 - 從全新 checkout 依 README 可完成啟動、查詢 API 及開啟網頁。
+
+### （選配）階段 9：GitHub Pages 公開快照部署
+
+本階段不影響自架版本；自架服務維持較高更新頻率與選配的受保護 Telegram API，GitHub Pages 則提供低頻、可分享的公開靜態版本。
+
+前置條件：
+
+- 階段 8 已完成。
+- 正式資料來源、可公開欄位及其授權、署名與再發布條件已確認。
+
+工作：
+
+- 使用同一 repository 的 `gh-pages` branch 作為完整靜態網站發布來源；私有主機上的 host worktree 負責更新該 branch。
+- 私有 collector 將公開 allowlist 的 snapshot 寫成 `data/status.json`；Pages 前端只讀取同站相對路徑，不提供公開應用 API。
+- 使用 fine-grained PAT 僅供 host publisher push `gh-pages`；credential 不進入 container、repository、靜態檔案或日誌。
+- 保持自架近即時版本與低頻 Pages snapshot 共用 detector、advice 與資料 schema，但可各自獨立啟用。
+
+驗收：
+
+- repository URL 的 Pages 網站能讀取最新 `data/status.json`，且不暴露 SQLite、原始 observations、憑證或內部錯誤。
+- Pages 資料延遲與自架版本的更新頻率差異有明確顯示；靜態版本不嘗試呼叫自架 API。
+- host publisher 可安全地只在資料變更或 heartbeat 時更新 branch，失敗時不影響 collector 的持續運作。
+
+完整架構、設定與部署程序見 [GITHUB_PAGES_DEPLOYMENT_PLAN.md](GITHUB_PAGES_DEPLOYMENT_PLAN.md)。
 
 ## 12. 測試策略
 
