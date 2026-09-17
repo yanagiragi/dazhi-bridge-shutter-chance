@@ -1,12 +1,8 @@
 # 大直橋飛機拍攝機會判斷系統：實作計畫
 
-> 狀態：階段 7 已完成；階段 7.5（不使用 OpenSky 的可行性驗證）進行中，階段 8 暫緩。
+> 狀態：階段 7.5 已完成；已決定以 adsb.fi 作為預設 provider，階段 8 可開始。
 >
 > 真實向西起飛樣本尚未取得，仍是階段 4 的必要現場驗收項目。
->
-> 真實向西起飛樣本尚未取得，仍是本階段必要的現場驗收項目。
->
-> 階段 4 的實際向西起飛樣本仍是必要驗收項目。
 >
 > 本文件記錄目前討論結果、假設、驗證方式與分段工作項目。確認本文件前，不建立應用程式、資料庫或部署設定。
 
@@ -473,7 +469,16 @@ Aircraft provider ──► Observation collector ──► SQLite
 - 決定並記錄後續正式 collector 使用 adsb.fi、保留 OpenSky 備援，或改評估其他來源；未完成此決策前，不把 OpenSky 視為正式部署的預設來源。
 - 使用者確認資料來源的適用條款、公開欄位 allowlist 與必要 attribution 後，才進入階段 8。
 
-結果：進行中。第一輪 30 分鐘實測共 360 次成功請求，已以官方離站資料人工確認 CI220／CAL220 的松山 eastbound 起飛航跡；adsb.fi 從距 RCSS 0.762 NM、氣壓高度 450 ft 起提供連續資料，現有 detector 在 3、5、10 NM 範圍均正確輸出 high-confidence eastbound。階段門檻目前為 1／10 筆，仍需 westbound 與不同機型樣本。詳見 [`spike/ADSB_FI_RESULTS.md`](spike/ADSB_FI_RESULTS.md)。
+結果：已完成。三輪共完成 1,483 次成功請求且沒有 HTTP／payload 錯誤，已以官方松山離站資料人工確認 13／10 個起飛事件；實際樣本涵蓋 ATR 72、Boeing 737、Boeing 787 與 Airbus A330，既有 detector 均合理輸出 high-confidence eastbound。第三輪連續採樣中，7 個完整涵蓋且可與官方資料配對的離站事件全數被找到；5 NM 範圍的位置與高度完整率均為 100%，callsign 98.9%、true track 97.6%、垂直速率 92.5%。缺少必要位置或爬升證據時會安全略過。技術上 adsb.fi 足以作為松山 eastbound 起飛的正式來源；真實 westbound 仍維持為階段 4 的必要現場驗收。adsb.fi 條款允許個人、非商業使用並要求署名及首頁連結，但沒有明確授權公開重新發布資料；公開網站與 GitHub Pages 的衍生 departure 再發布權將另向供應方確認。詳見 [`spike/ADSB_FI_RESULTS.md`](spike/ADSB_FI_RESULTS.md)。
+
+決策紀錄：
+
+1. 正式 collector 預設使用 `adsbfi`，`opensky` 保留為可手動切換的選配來源，不做自動 failover。
+2. 先以個人、非商業的自架服務進入階段 8；公開網站／GitHub Pages 的再發布權另行向 adsb.fi 確認。
+3. 公開 departure 僅提供時間、callsign、方向、跑道推定、信心與 source；不公開 ICAO24 與原始 observation。
+4. provider 為 `adsbfi` 時，網頁 footer 顯示並連結 adsb.fi；OpenSky 模式不顯示此署名。
+5. 原始 observation 僅在自架環境保存 7 天，departure 長期保存；清理機制於階段 8 實作。
+6. 真實 westbound 實測不阻擋階段 8，但仍是階段 4 的必要現場驗收項目。
 
 ### 階段 8：長時間運作與部署驗證
 

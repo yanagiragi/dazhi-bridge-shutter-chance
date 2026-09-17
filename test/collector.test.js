@@ -173,6 +173,7 @@ test('collector retries 429 and records canonical observations', async () => {
 })
 
 test('configuration selects provider-specific query geometry', () => {
+    const defaultConfig = loadConfig({})
     const adsbFiConfig = loadConfig({
         AIRCRAFT_DATA_PROVIDER: 'adsbfi',
         ADSB_FI_LATITUDE: '25.1',
@@ -181,6 +182,7 @@ test('configuration selects provider-specific query geometry', () => {
     })
     const openSkyConfig = loadConfig({ AIRCRAFT_DATA_PROVIDER: 'opensky' })
 
+    assert.equal(defaultConfig.aircraftDataProvider, 'adsbfi')
     assert.deepEqual(collectionParams(adsbFiConfig), {
         latitude: 25.1,
         longitude: 121.6,

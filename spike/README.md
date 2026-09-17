@@ -25,7 +25,24 @@ The program stops after the requested sample count. Credentials are read only fr
 the environment and are not written to disk. Raw JSONL files under `spike/data/`
 are ignored by Git.
 
-## Summarize observed tracks
+## Collect adsb.fi coverage samples
+
+The adsb.fi spike defaults to a 25 NM query every five seconds so the analyzer can compare narrower radii without issuing additional API requests:
+
+```sh
+node spike/collect-adsbfi.mjs --samples 360 --interval 5 \
+  --output spike/data/adsbfi-observations.jsonl
+```
+
+The interval must be at least one second to respect the public endpoint rate limit. Analyze field coverage, position age, low-altitude observations and detector output at 3, 5, 10 and 25 NM:
+
+```sh
+node spike/analyze-adsbfi.mjs spike/data/adsbfi-observations.jsonl
+```
+
+A detected departure is only a candidate until it has been matched with an actual Songshan departure. A wide radius can include Taoyuan traffic and produce false positives. See [ADSB_FI_RESULTS.md](ADSB_FI_RESULTS.md) for reviewed observations and remaining acceptance work.
+
+## Summarize observed OpenSky tracks
 
 ```sh
 node spike/analyze-observations.mjs spike/data/observations.jsonl

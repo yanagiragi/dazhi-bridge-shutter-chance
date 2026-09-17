@@ -5,7 +5,7 @@ const DEFAULT_PORT = 3000
 // geometry; it is intentionally independent of credentials.
 const AIRCRAFT_PROVIDER_OPENSKY = 'opensky'
 const AIRCRAFT_PROVIDER_ADSB_FI = 'adsbfi'
-const DEFAULT_AIRCRAFT_DATA_PROVIDER = AIRCRAFT_PROVIDER_OPENSKY
+const DEFAULT_AIRCRAFT_DATA_PROVIDER = AIRCRAFT_PROVIDER_ADSB_FI
 
 // Default adsb.fi point query around Songshan Airport. Distance is nautical
 // miles; five NM covers departure paths while keeping each result bounded.

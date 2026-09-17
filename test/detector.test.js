@@ -57,6 +57,20 @@ test('does not classify a descending overflight as departure', () => {
     assert.equal(detectDepartures(states).length, 0)
 })
 
+test('does not classify states without a climb rate as a departure', () => {
+    const states = departureStates({ direction: 'eastbound' })
+        .map(item => ({ ...item, verticalRate: null }))
+
+    assert.equal(detectDepartures(states).length, 0)
+})
+
+test('does not classify states without positions as a departure', () => {
+    const states = departureStates({ direction: 'eastbound' })
+        .map(item => ({ ...item, latitude: null, longitude: null }))
+
+    assert.equal(detectDepartures(states).length, 0)
+})
+
 test('splits a landing followed by departure', () => {
     const states = [
         ...departureStates({ direction: 'eastbound' }).map(item => ({

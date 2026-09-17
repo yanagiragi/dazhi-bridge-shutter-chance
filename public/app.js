@@ -6,7 +6,10 @@
     const EMPTY_VALUE = '--'
     const WESTBOUND_ARROW = '\u2190'
     const NO_DIRECTION_SYMBOL = '.'
+    // Dashboard endpoints and the provider ID that requires attribution.
     const API_STATUS_URL = '/api/v1/status'
+    const WEB_CONFIG_URL = '/web-config.json'
+    const ADSB_FI_PROVIDER = 'adsbfi'
 
     const RECOMMENDATION_STYLES = {
         high: 'good',
@@ -77,7 +80,7 @@
         const callsign = createTextElement(
             'span',
             'callsign',
-            departure.callsign || departure.icao24
+            departure.callsign || EMPTY_VALUE
         )
         const direction = createTextElement(
             'span',
@@ -152,6 +155,15 @@
         if (latestPayload) render(latestPayload)
     }
 
+    async function loadWebConfig () {
+        const response = await fetch(WEB_CONFIG_URL)
+        if (!response.ok) throw new Error('Unable to load web configuration')
+
+        const config = await response.json()
+        element('adsb-fi-attribution').hidden =
+            config.aircraftDataProvider !== ADSB_FI_PROVIDER
+    }
+
     async function loadData () {
         try {
             const response = await fetch(API_STATUS_URL)
@@ -170,7 +182,10 @@
     }
 
     async function start () {
-        await loadTranslations(language)
+        await Promise.all([
+            loadTranslations(language),
+            loadWebConfig()
+        ])
         applyLanguage()
         await loadData()
         setInterval(loadData, REFRESH_INTERVAL_MS)

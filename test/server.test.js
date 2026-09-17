@@ -70,7 +70,8 @@ test('status API returns advice and collector state', async t => {
     const server = createServer({
         ...opened,
         timezone: 'Asia/Taipei',
-        now: () => now
+        now: () => now,
+        aircraftDataProvider: 'opensky'
     })
 
     t.after(() => {
@@ -88,6 +89,15 @@ test('status API returns advice and collector state', async t => {
     assert.equal(payload.advice.today.westbound, 1)
     assert.equal(payload.advice.confidence, 'low')
     assert.equal(payload.collector.remaining_credits, 99)
+    assert.equal('icao24' in payload.advice.recentDepartures[0], false)
+
+    const configResponse = await fetch(
+        'http://127.0.0.1:' + server.address().port +
+            '/web-config.json'
+    )
+    assert.deepEqual(await configResponse.json(), {
+        aircraftDataProvider: 'opensky'
+    })
 })
 
 test('departures API validates limit and bearer token', async t => {
@@ -133,7 +143,17 @@ test('dashboard serves the localized web shell', async t => {
         `http://127.0.0.1:${server.address().port}/`
     )
     assert.equal(response.status, 200)
-    assert.match(await response.text(), /Dazhi Bridge Flight Watch/)
+    const html = await response.text()
+    assert.match(html, /Dazhi Bridge Flight Watch/)
+    assert.match(html, /id="adsb-fi-attribution" hidden/)
+
+    const configResponse = await fetch(
+        'http://127.0.0.1:' + server.address().port +
+            '/web-config.json'
+    )
+    assert.deepEqual(await configResponse.json(), {
+        aircraftDataProvider: 'adsbfi'
+    })
 
     const localeResponse = await fetch(
         `http://127.0.0.1:${server.address().port}/locales/zh-TW.json`

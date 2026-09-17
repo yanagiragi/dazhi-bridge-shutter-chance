@@ -25,7 +25,9 @@ const MAX_DEPARTURE_QUERY_LIMIT = 50
 
 // Fetch enough history for advice statistics while keeping each request bounded.
 const DEPARTURE_QUERY_FETCH_LIMIT = 500
+// Static dashboard directory and its public runtime provider-config endpoint.
 const PUBLIC_ROOT = join(__dirname, '..', 'public')
+const WEB_CONFIG_PATH = '/web-config.json'
 
 function json (response, statusCode, payload) {
     const body = JSON.stringify(payload)
@@ -57,7 +59,7 @@ function authorized (request, apiToken) {
 
 function querySnapshot (database, now, timezone, limit) {
     const departures = database.prepare(`
-        SELECT icao24, callsign, detected_at, direction,
+        SELECT callsign, detected_at, direction,
                runway_estimate, detection_confidence, source
         FROM departures
         WHERE detected_at <= ?
@@ -90,6 +92,7 @@ function createServer ({
     apiToken = null,
     webEnabled = true,
     apiEnabled = true,
+    aircraftDataProvider = AIRCRAFT_PROVIDER_ADSB_FI,
     now = () => new Date()
 }) {
     return http.createServer((request, response) => {
@@ -110,6 +113,11 @@ function createServer ({
             ]
         }
         const staticAsset = staticAssets[requestUrl.pathname]
+        if (webEnabled && request.method === 'GET' &&
+            requestUrl.pathname === WEB_CONFIG_PATH) {
+            return json(response, HTTP_OK, { aircraftDataProvider })
+        }
+
         if (webEnabled && request.method === 'GET' && staticAsset) {
             const body = readFileSync(join(PUBLIC_ROOT, staticAsset[0]))
             response.writeHead(HTTP_OK, {
@@ -221,6 +229,7 @@ function start (config = loadConfig()) {
         apiToken: config.apiBearerToken,
         webEnabled: config.webEnabled,
         apiEnabled: config.apiEnabled,
+        aircraftDataProvider: config.aircraftDataProvider
     })
     const collector = createCollector(config, opened.database)
     const scheduler = startScheduler({
