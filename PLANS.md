@@ -1,6 +1,6 @@
 # 大直橋飛機拍攝機會判斷系統：實作計畫
 
-> 狀態：階段 7.5 已完成；已決定以 adsb.fi 作為預設 provider，階段 8 可開始。
+> 狀態：階段 8 已完成；階段 8.5 待開始，集中處理 soak test 的 detector 與網頁使用者回饋。
 >
 > 真實向西起飛樣本尚未取得，仍是階段 4 的必要現場驗收項目。
 >
@@ -499,13 +499,84 @@ Aircraft provider ──► Observation collector ──► SQLite
 - 模擬所選資料來源失敗（若使用 OpenSky，另包含 token 過期）及 SQLite 重啟後，服務可恢復且不製造重複 departure。
 - 從全新 checkout 依 README 可完成啟動、查詢 API 及開啟網頁。
 
+結果：已完成。已完成 06:30–21:00 active window、outside_schedule 狀態、graceful shutdown、結構化日誌、7 天 observation 清理、正式 collector 與 detector 串接、30 分鐘 departure 去重、Docker log rotation，以及 SQLite backup／restore。隔離 Docker smoke test、容器重啟、volume 持久化、真實 adsb.fi 請求、排程外不 polling、隔日 06:30 自動恢復與備份還原均已驗證。24 小時 soak test 自 2026-09-17 15:10 至 2026-09-18 15:12（Asia/Taipei），共 97 組監控樣本、1,746 次成功 collector cycle、0 次記錄到的失敗，容器全程 healthy 且未重啟；記憶體最大 55.71 MiB、平均 50.49 MiB。32 項測試、ESLint、Compose config、SQLite integrity check 與 diff check 全部通過。另從已提交階段 8 程式的 HEAD `2077a61` 建立全新 clone，依 README 以獨立 Compose 環境確認 image 建置、schema version 2、真實 provider 收集、health、status API 與網頁均正常。後續修正已排入階段 8.5。詳見 [`spike/STAGE8_RESULTS.md`](spike/STAGE8_RESULTS.md)。
+
+### 階段 8.5：Soak test 問題修正與使用者體驗整理
+
+目標：處理階段 8 長時間測試發現的 detector 正確性問題、資料品質疑問與網頁使用者回饋。此階段先完成調查與規格決策，再修改程式；詳細觀測證據保留於 [`spike/STAGE8_RESULTS.md`](spike/STAGE8_RESULTS.md)。
+
+工作：
+
+1. **修正 CAL261 降落誤判為起飛**
+   - 起飛必須具有低高度開始、時間上持續爬升及實際位置位移的證據。
+   - 已呈現下降進場的 track 不得因 15 分鐘滑動窗口截斷而重新解讀為起飛；重複位置與矛盾垂直速率必須安全略過。
+   - 以保留的 CAL261 observation 建立 replay regression test，同時確認既有真實 eastbound departure 仍可辨識。
+
+2. **調查 09:13 顯示資料不足，但列表仍有最後一筆 19:52**
+   - 確認 19:52 是否是前一天的 departure，以及跨日後 advice 只統計「今天且早於現在」而歸零是否符合規格。
+   - 統一航班列表、建議統計、最後更新時間及 Asia/Taipei 日期邊界的語意；即使資料不足符合規格，也要讓使用者理解原因。
+
+3. **釐清資料不足旁長期顯示的綠色圓點**
+   - 確認它代表 collector/provider 健康、建議狀態或純裝飾。
+   - 若代表來源健康，加入可理解的標籤或圖例，清楚表達「服務正常但判斷樣本不足」；若沒有資訊價值則移除。
+
+4. **統一繁體中文與英文的字體大小**
+   - 以目前英文版大小為基準，檢查 font fallback、字重、行高及翻譯長度造成的視覺差異。
+
+5. **加入 dark mode 切換**
+   - 定義明暗主題、切換控制與偏好保存，並決定初次載入是否跟隨 `prefers-color-scheme`。
+
+6. **討論航班列的 collapsible 詳細資訊**
+   - 候選內容包括 detector 判斷原因、信心水準、方向證據、爬升位置或簡化軌跡。
+   - 實作前先確認 evidence 是否足夠、哪些欄位適合公開，以及位置資料是否符合最小化原則；若沒有足夠且適合公開的資訊，可明確決定不實作。
+
+7. **釐清航班識別碼並評估航空公司 icon**
+   - UI 必須區分 ADS-B callsign、ICAO 航空公司代碼、IATA 航班編號與航空器 `icao24`，不得把 `CCA470` 直接標成 IATA 航班編號。
+   - 確認自架版與未來公開版可顯示的識別欄位。若加入 icon，需定義 ICAO 代碼映射、未知代碼 fallback、資產來源與授權。
+
+8. **調查 Flightradar24 與 collector 同時缺少的航班**
+   - 選取具體缺漏航班，對照時刻、實際是否起飛、adsb.fi 原始回應、collector observation 與 detector 條件。
+   - 區分航班取消／延誤、ADS-B 廣播或低空 feeder 覆蓋不足、provider 漏報、查詢範圍外，以及有 observation 但未通過 detector 等原因。
+
+9. **處理 numeric-only callsign `0917` 與時間顯示**
+   - 追查 adsb.fi 原始 `flight` payload 與航空器實際身分，決定 numeric-only callsign 應原樣顯示、標為未知，或僅在能可靠轉換時顯示 IATA 航班編號。
+   - 該筆 API `detected_at` 為 `2026-09-17T11:52:51.840Z`，即台北時間 19:52；若網頁顯示 07:52，修正 12 小時制遺失 AM/PM 的問題，或統一採清楚的 24 小時制。
+
+10. **服務時間外明確顯示隔天才會更新**
+    - collector state 為 `outside_schedule` 時，顯示「今日收集已結束」及依實際時區與 active window 計算的下一次恢復時間，例如「明天 06:30」。
+    - 不得在前端寫死 06:30／21:00；英文與繁體中文都需支援，跨夜時段與設定變更也必須正確。
+
+11. **討論並整理工程文件的位置**
+    - 盤點 `PLANS.md` 與其他工程文件的用途、讀者及生命週期，再提出適合的目錄結構。
+    - 決定哪些文件應留在 repository root、哪些移至 `docs/` 或其他目錄；確認方案前不搬移檔案。
+    - 搬移時更新 README、文件間連結及相關 script 引用，避免產生失效路徑。
+
+12. **確認 `spike/` 資料與 script 的定位**
+    - 盤點 `spike/` 中哪些是一次性 POC 中間產物、可重現研究的 script、測試 fixture、原始樣本或正式驗證結果。
+    - 討論應保留、移入正式測試／工具／文件目錄、封存或忽略的內容；確認前不刪除或搬移。
+    - 保留能重現 provider 與 detector 結論的必要證據，同時避免把可重新產生的大型資料或敏感原始資料納入版本控制。
+
+驗收：
+
+- CAL261 replay 不再產生 departure，既有已確認的 eastbound 與合成 westbound 測試仍通過。
+- 跨日、資料不足、fresh、stale、error 與 outside_schedule 的 API／網頁語意一致，並有自動化時間邊界測試。
+- 中英文排版尺寸一致；狀態指示有明確文字；dark mode 可切換、可保存偏好且保持可讀性。
+- callsign 與時間不再被誤標；numeric-only 值及未知航空公司有明確 fallback。
+- 至少選取具體缺漏航班完成資料來源與 detector 分層調查，留下可重現的結論。
+- collapsible 詳細資訊與航空公司 icon 各自完成公開欄位／授權評估及實作決策；若決定實作，需補齊中英文、手機版與資料缺失狀態測試。
+- outside_schedule 畫面顯示由實際設定計算的下一次恢復時間，並涵蓋一般與跨夜 active window。
+- 工程文件與 `spike/` 產物完成清單及用途分類，使用者確認目標目錄結構後才執行搬移或清理。
+- 整理後 README、文件連結、測試與必要 script 均可正常使用，且可重現的驗證證據沒有遺失。
+
+結果：待開始。本階段內容來自階段 8 soak test；尚未修改 detector、API 或網頁。
+
 ### （選配）階段 9：GitHub Pages 公開快照部署
 
 本階段不影響自架版本；自架服務維持較高更新頻率與選配的受保護 Telegram API，GitHub Pages 則提供低頻、可分享的公開靜態版本。
 
 前置條件：
 
-- 階段 8 已完成。
+- 階段 8 與階段 8.5 已完成。
 - 正式資料來源、可公開欄位及其授權、署名與再發布條件已確認。
 
 工作：

@@ -10,7 +10,7 @@ const { openDatabase } = require('./database')
 const { OpenSkyClient } = require('./opensky')
 const { AdsbFiClient } = require('./adsbfi')
 const { Collector } = require('./collector')
-const { startScheduler } = require('./scheduler')
+const { isWithinActiveWindow, startScheduler } = require('./scheduler')
 const { buildAdvice } = require('./advice')
 
 // HTTP status codes returned by the JSON API.
@@ -68,7 +68,7 @@ function querySnapshot (database, now, timezone, limit) {
     `).all(now.toISOString(), DEPARTURE_QUERY_FETCH_LIMIT)
     const collectorRun = database.prepare(`
         SELECT last_success_at, last_failure_at, last_http_status,
-               remaining_credits, last_error, updated_at
+               remaining_credits, last_error, state, updated_at
         FROM collector_runs
         WHERE id = 1
     `).get()
@@ -79,6 +79,7 @@ function querySnapshot (database, now, timezone, limit) {
             lastSuccessAt: collectorRun?.last_success_at ?? null,
             now,
             timezone,
+            collectorState: collectorRun?.state ?? null,
             recentLimit: limit
         }),
         collector: collectorRun ?? null
@@ -210,7 +211,8 @@ function createCollector (config, database) {
     return new Collector({
         database,
         provider,
-        source: config.aircraftDataProvider
+        source: config.aircraftDataProvider,
+        observationRetentionDays: config.observationRetentionDays
     })
 }
 
@@ -218,6 +220,59 @@ function collectionParams (config) {
     return config.aircraftDataProvider === AIRCRAFT_PROVIDER_ADSB_FI
         ? config.adsbFiPoint
         : config.openskyBounds
+}
+
+function structuredLog (event, details = {}) {
+    console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        event,
+        ...details
+    }))
+}
+
+function createCollectionTask ({
+    collector,
+    config,
+    now = () => new Date(),
+    logger = structuredLog
+}) {
+    let wasActive = null
+
+    return async () => {
+        const currentTime = now()
+        const active = isWithinActiveWindow({
+            date: currentTime,
+            timezone: config.collectorActiveTimeZone,
+            start: config.collectorActiveStart,
+            end: config.collectorActiveEnd
+        })
+
+        if (!active) {
+            if (wasActive !== false) {
+                const updatedAt = collector.recordOutsideSchedule()
+                logger('collector-outside-schedule', { updatedAt })
+            }
+            wasActive = false
+            return { state: 'outside_schedule' }
+        }
+
+        if (wasActive !== true) {
+            logger('collector-active')
+        }
+        wasActive = true
+
+        try {
+            const result = await collector.runOnce(collectionParams(config))
+            logger('collector-success', result)
+            return { state: 'ok', ...result }
+        } catch (error) {
+            logger('collector-error', {
+                message: error.message,
+                status: error.status ?? null
+            })
+            return { state: 'error', error }
+        }
+    }
 }
 
 function start (config = loadConfig()) {
@@ -232,46 +287,66 @@ function start (config = loadConfig()) {
         aircraftDataProvider: config.aircraftDataProvider
     })
     const collector = createCollector(config, opened.database)
+    const collectionTask = createCollectionTask({ collector, config })
     const scheduler = startScheduler({
         intervalMs: config.collectorIntervalMs,
-        task: () => collector.runOnce(collectionParams(config))
-            .catch(error => console.error(JSON.stringify({
-                event: 'collector-error',
-                message: error.message
-            })))
+        task: collectionTask
     })
+    let shuttingDown = false
 
     server.on('error', error => {
-        console.error(JSON.stringify({
-            event: 'server-error',
-            message: error.message
-        }))
+        structuredLog('server-error', { message: error.message })
     })
     server.listen(config.port, () => {
-        console.log(JSON.stringify({
-            event: 'server-started',
+        structuredLog('server-started', {
             port: config.port,
             databasePath: config.databasePath,
             schemaVersion: opened.schemaVersion,
-            timezone: config.timezone
-        }))
+            timezone: config.timezone,
+            provider: config.aircraftDataProvider,
+            activeTimeZone: config.collectorActiveTimeZone,
+            activeStart: config.collectorActiveStart,
+            activeEnd: config.collectorActiveEnd
+        })
     })
+    void scheduler.tick()
 
-    function shutdown (signal) {
-        console.log(JSON.stringify({ event: 'shutdown', signal }))
-        scheduler.stop()
-        server.close(() => opened.database.close())
+    async function shutdown (signal) {
+        if (shuttingDown) return
+        shuttingDown = true
+        structuredLog('shutdown-started', { signal })
+        await scheduler.stop()
+        await new Promise((resolve, reject) => {
+            server.close(error => error ? reject(error) : resolve())
+        })
+        opened.database.close()
+        structuredLog('shutdown-complete', { signal })
     }
 
-    process.once('SIGINT', () => shutdown('SIGINT'))
-    process.once('SIGTERM', () => shutdown('SIGTERM'))
-    return { server, database: opened.database, scheduler }
+    const handleSignal = signal => {
+        shutdown(signal).catch(error => {
+            structuredLog('shutdown-error', {
+                signal,
+                message: error.message
+            })
+            process.exitCode = 1
+        })
+    }
+    process.once('SIGINT', () => handleSignal('SIGINT'))
+    process.once('SIGTERM', () => handleSignal('SIGTERM'))
+    return {
+        server,
+        database: opened.database,
+        scheduler,
+        shutdown
+    }
 }
 
 if (require.main === module) start()
 
 module.exports = {
     createServer,
+    createCollectionTask,
     start,
     parseLimit,
     querySnapshot,

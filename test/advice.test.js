@@ -77,6 +77,19 @@ test('returns insufficient data when the collector is stale or has no departures
     assert.equal(empty.recommendation, 'insufficient-data')
 })
 
+test('reports outside schedule without treating it as a collector failure', () => {
+    const advice = buildAdvice({
+        now: NOW,
+        lastSuccessAt: '2026-09-15T12:00:00.000Z',
+        collectorState: 'outside_schedule',
+        departures: [departure(1, 'westbound')]
+    })
+
+    assert.equal(advice.freshness, 'outside_schedule')
+    assert.equal(advice.recommendation, 'insufficient-data')
+    assert.equal(advice.confidence, 'insufficient')
+})
+
 test('uses Taipei date when UTC crosses midnight', () => {
     const advice = buildAdvice({
         now: new Date('2026-09-16T16:05:00.000Z'),

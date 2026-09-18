@@ -14,6 +14,10 @@ services:
       API_BEARER_TOKEN: ${API_BEARER_TOKEN:-}
       AIRCRAFT_DATA_PROVIDER: ${AIRCRAFT_DATA_PROVIDER:-adsbfi}
       COLLECTOR_INTERVAL_MS: ${COLLECTOR_INTERVAL_MS:-30000}
+      COLLECTOR_ACTIVE_TIME_ZONE: ${COLLECTOR_ACTIVE_TIME_ZONE:-Asia/Taipei}
+      COLLECTOR_ACTIVE_START: ${COLLECTOR_ACTIVE_START:-06:30}
+      COLLECTOR_ACTIVE_END: ${COLLECTOR_ACTIVE_END:-21:00}
+      OBSERVATION_RETENTION_DAYS: ${OBSERVATION_RETENTION_DAYS:-7}
       OPENSKY_CLIENT_ID: ${OPENSKY_CLIENT_ID:-}
       OPENSKY_CLIENT_SECRET: ${OPENSKY_CLIENT_SECRET:-}
       OPENSKY_LAMIN: ${OPENSKY_LAMIN:-25.06}
@@ -26,6 +30,12 @@ services:
     volumes:
       - dazhi-data:/data
     restart: unless-stopped
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test:
         - CMD

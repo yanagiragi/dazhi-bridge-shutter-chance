@@ -58,3 +58,7 @@ See `RESULTS.md` for the reviewed phase 1 outcome and remaining limitation.
 The analyzer is deliberately a coarse feasibility heuristic, not the production
 departure detector. Candidate tracks still require manual validation before phase
 1 can pass.
+
+## Deployment soak test
+
+See [STAGE8_RESULTS.md](STAGE8_RESULTS.md) for phase 8 Docker, restart, backup, schedule, and 24-hour soak-test evidence.

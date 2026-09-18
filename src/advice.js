@@ -39,7 +39,8 @@ function sortNewestFirst (departures) {
     )
 }
 
-function freshnessFor (lastSuccessAt, now) {
+function freshnessFor (lastSuccessAt, now, collectorState = null) {
+    if (collectorState === 'outside_schedule') return 'outside_schedule'
     if (!lastSuccessAt) return 'unknown'
     const age = now.getTime() - Date.parse(lastSuccessAt)
     if (!Number.isFinite(age) || age < 0) return 'unknown'
@@ -49,7 +50,8 @@ function freshnessFor (lastSuccessAt, now) {
 }
 
 function recommendationFor ({ westboundCount, totalCount, freshness }) {
-    if (freshness === 'unknown' || freshness === 'expired' || totalCount === 0) {
+    if (freshness === 'unknown' || freshness === 'expired' ||
+        freshness === 'outside_schedule' || totalCount === 0) {
         return {
             recommendation: 'insufficient-data',
             confidence: 'insufficient',
@@ -88,6 +90,7 @@ function buildAdvice ({
     lastSuccessAt = null,
     now = new Date(),
     timezone = 'Asia/Taipei',
+    collectorState = null,
     recentLimit = RECENT_DEPARTURE_LIMIT
 } = {}) {
     const today = localDateKey(now, timezone)
@@ -105,7 +108,7 @@ function buildAdvice ({
     const westboundCount = todayDepartures.filter(departure =>
         departure.direction === 'westbound'
     ).length
-    const freshness = freshnessFor(lastSuccessAt, now)
+    const freshness = freshnessFor(lastSuccessAt, now, collectorState)
     const recommendation = recommendationFor({
         westboundCount,
         totalCount: todayDepartures.length,

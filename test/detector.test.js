@@ -51,6 +51,17 @@ test('detects synthetic westbound departure using mirrored logic', () => {
     assert.equal(departure.detectionConfidence, 'high')
 })
 
+test('does not classify a climb first seen above the initial altitude limit', () => {
+    const states = departureStates({ direction: 'westbound' })
+        .map((item, index) => ({
+            ...item,
+            baroAltitude: 1600 + index * 100,
+            geoAltitude: 1600 + index * 100
+        }))
+
+    assert.equal(detectDepartures(states).length, 0)
+})
+
 test('does not classify a descending overflight as departure', () => {
     const states = departureStates({ direction: 'westbound' })
         .map(item => ({ ...item, verticalRate: -4 }))
@@ -85,5 +96,22 @@ test('splits a landing followed by departure', () => {
 })
 
 test('stores a departure once with runway estimate', () => {
-    const database = new Database(':memory:'); applyMigrations(database); const [departure] = detectDepartures(departureStates({ direction: 'westbound' })); storeDepartures(database, [departure]); storeDepartures(database, [departure]); const row = database.prepare('SELECT direction, runway_estimate, detection_confidence FROM departures').get(); assert.deepEqual(row, { direction: 'westbound', runway_estimate: '28', detection_confidence: 'high' }); database.close()
+    const database = new Database(':memory:')
+    applyMigrations(database)
+    const [departure] = detectDepartures(
+        departureStates({ direction: 'westbound' })
+    )
+
+    assert.equal(storeDepartures(database, [departure]), 1)
+    assert.equal(storeDepartures(database, [departure]), 0)
+    const row = database.prepare(
+        'SELECT direction, runway_estimate, detection_confidence ' +
+        'FROM departures'
+    ).get()
+    assert.deepEqual(row, {
+        direction: 'westbound',
+        runway_estimate: '28',
+        detection_confidence: 'high'
+    })
+    database.close()
 })

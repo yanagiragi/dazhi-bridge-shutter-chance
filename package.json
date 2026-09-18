@@ -11,6 +11,8 @@
     "scripts": {
         "start": "node src/server.js",
         "migrate": "node src/migrate.js",
+        "backup": "node src/backup.js",
+        "restore": "node src/restore.js",
         "test": "node --test",
         "lint": "eslint src/ test/ public/"
     },

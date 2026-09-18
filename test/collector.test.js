@@ -6,7 +6,8 @@ const { applyMigrations } = require('../src/migrations')
 const { Collector } = require('../src/collector')
 const { loadConfig } = require('../src/config')
 const { OpenSkyClient } = require('../src/opensky')
-const { collectionParams } = require('../src/server')
+const { isWithinActiveWindow, startScheduler } = require('../src/scheduler')
+const { collectionParams, createCollectionTask } = require('../src/server')
 
 test('OpenSky client caches token and returns canonical aircraft', async () => {
     let calls = 0
@@ -172,6 +173,101 @@ test('collector retries 429 and records canonical observations', async () => {
     database.close()
 })
 
+test('collector detects departures, deduplicates reprocessing, and removes old observations', async () => {
+    const database = new Database(':memory:')
+    applyMigrations(database)
+    database.prepare(
+        'INSERT INTO aircraft_observations ' +
+        '(observed_at, icao24, on_ground, source) VALUES (?, ?, ?, ?)'
+    ).run('2026-09-01T00:00:00.000Z', 'old001', 0, 'adsbfi')
+
+    let currentTime = new Date('2026-09-16T04:00:00.000Z')
+    let sample = 0
+    const provider = {
+        async getAircraft () {
+            const longitude = 121.54 + sample * 0.01
+            const altitude = 300 + sample * 200
+            sample++
+            return {
+                aircraft: [{
+                    icao24: 'abc123',
+                    callsign: 'TEST123',
+                    latitude: 25.07,
+                    longitude,
+                    baroAltitude: altitude,
+                    geoAltitude: altitude,
+                    velocity: 80,
+                    trueTrack: 90,
+                    verticalRate: 5,
+                    onGround: 0
+                }],
+                remainingCredits: null
+            }
+        }
+    }
+    const collector = new Collector({
+        database,
+        provider,
+        source: 'adsbfi',
+        now: () => currentTime,
+        logger: () => {}
+    })
+
+    const first = await collector.runOnce()
+    currentTime = new Date('2026-09-16T04:00:30.000Z')
+    const second = await collector.runOnce()
+    currentTime = new Date('2026-09-16T04:01:00.000Z')
+    const third = await collector.runOnce()
+
+    assert.equal(first.deletedObservations, 1)
+    assert.equal(second.storedDepartures, 1)
+    assert.equal(third.storedDepartures, 0)
+    assert.equal(
+        database.prepare('SELECT count(*) AS count FROM departures').get().count,
+        1
+    )
+    assert.equal(
+        database.prepare('SELECT state FROM collector_runs').get().state,
+        'ok'
+    )
+    database.close()
+})
+
+test('collector recovers from a provider failure on a later poll', async () => {
+    const database = new Database(':memory:')
+    applyMigrations(database)
+    let failing = true
+    const provider = {
+        async getAircraft () {
+            if (failing) {
+                const error = new Error('temporary outage')
+                error.status = 503
+                throw error
+            }
+            return { aircraft: [], remainingCredits: null }
+        }
+    }
+    const collector = new Collector({
+        database,
+        provider,
+        maxRetries: 0
+    })
+
+    await assert.rejects(collector.runOnce(), /temporary outage/)
+    assert.equal(
+        database.prepare('SELECT state FROM collector_runs').get().state,
+        'error'
+    )
+
+    failing = false
+    await collector.runOnce()
+    assert.equal(
+        database.prepare('SELECT state FROM collector_runs').get().state,
+        'ok'
+    )
+    database.close()
+})
+
 test('configuration selects provider-specific query geometry', () => {
     const defaultConfig = loadConfig({})
     const adsbFiConfig = loadConfig({
@@ -183,6 +279,10 @@ test('configuration selects provider-specific query geometry', () => {
     const openSkyConfig = loadConfig({ AIRCRAFT_DATA_PROVIDER: 'opensky' })
 
     assert.equal(defaultConfig.aircraftDataProvider, 'adsbfi')
+    assert.equal(defaultConfig.collectorActiveTimeZone, 'Asia/Taipei')
+    assert.equal(defaultConfig.collectorActiveStart, '06:30')
+    assert.equal(defaultConfig.collectorActiveEnd, '21:00')
+    assert.equal(defaultConfig.observationRetentionDays, 7)
     assert.deepEqual(collectionParams(adsbFiConfig), {
         latitude: 25.1,
         longitude: 121.6,
@@ -193,10 +293,76 @@ test('configuration selects provider-specific query geometry', () => {
         () => loadConfig({ AIRCRAFT_DATA_PROVIDER: 'unknown' }),
         /must be opensky or adsbfi/
     )
+    assert.throws(
+        () => loadConfig({ COLLECTOR_ACTIVE_START: '6:30' }),
+        /must use HH:MM/
+    )
+    assert.throws(
+        () => loadConfig({ COLLECTOR_ACTIVE_TIME_ZONE: 'Mars/Base' }),
+        /must be a valid IANA timezone/
+    )
+})
+
+test('active window uses Taipei time and excludes the end boundary', () => {
+    const schedule = {
+        timezone: 'Asia/Taipei',
+        start: '06:30',
+        end: '21:00'
+    }
+
+    assert.equal(isWithinActiveWindow({
+        ...schedule,
+        date: new Date('2026-09-16T22:29:00.000Z')
+    }), false)
+    assert.equal(isWithinActiveWindow({
+        ...schedule,
+        date: new Date('2026-09-16T22:30:00.000Z')
+    }), true)
+    assert.equal(isWithinActiveWindow({
+        ...schedule,
+        date: new Date('2026-09-17T13:00:00.000Z')
+    }), false)
+})
+
+test('collection task polls immediately when active and records one pause transition', async () => {
+    let currentTime = new Date('2026-09-16T22:29:00.000Z')
+    let collections = 0
+    let pauses = 0
+    const collector = {
+        recordOutsideSchedule () {
+            pauses++
+            return currentTime.toISOString()
+        },
+        async runOnce () {
+            collections++
+            return { count: 0 }
+        }
+    }
+    const config = {
+        collectorActiveTimeZone: 'Asia/Taipei',
+        collectorActiveStart: '06:30',
+        collectorActiveEnd: '21:00',
+        aircraftDataProvider: 'adsbfi',
+        adsbFiPoint: {}
+    }
+    const task = createCollectionTask({
+        collector,
+        config,
+        now: () => currentTime,
+        logger: () => {}
+    })
+
+    await task()
+    await task()
+    assert.equal(pauses, 1)
+    assert.equal(collections, 0)
+
+    currentTime = new Date('2026-09-16T22:30:00.000Z')
+    await task()
+    assert.equal(collections, 1)
 })
 
 test('scheduler never overlaps tasks', async () => {
-    const { startScheduler } = require('../src/scheduler')
     let active = 0
     let max = 0
     const scheduler = startScheduler({
@@ -211,7 +377,8 @@ test('scheduler never overlaps tasks', async () => {
 
     await scheduler.tick()
     await new Promise(resolve => setTimeout(resolve, 30))
-    scheduler.stop()
+    await scheduler.stop()
 
     assert.equal(max, 1)
+    assert.equal(active, 0)
 })

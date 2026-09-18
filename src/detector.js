@@ -28,6 +28,8 @@ const HIGH_CONFIDENCE_SAMPLE_LIMIT = 3
 // Songshan runway designators associated with the inferred direction.
 const EASTBOUND_RUNWAY = '10'
 const WESTBOUND_RUNWAY = '28'
+// Same-aircraft departures within this window are one event across reprocessing.
+const DEPARTURE_DEDUP_WINDOW_MS = 30 * 60 * 1000
 
 function median (values) {
     if (values.length === 0) return null
@@ -135,7 +137,6 @@ function summarizeTrack (states) {
             .slice(0, INITIAL_DIRECTION_SAMPLE_LIMIT)
     }
 
-    if (directionStates.length === 0) directionStates = positioned
     const { direction, longitudeDelta } = directionFromStates(directionStates)
 
     return {
@@ -203,28 +204,40 @@ function storeDepartures (database, departures, source = 'opensky') {
         )
     `)
     const exists = database.prepare(
-        'SELECT 1 FROM departures WHERE icao24 = ? AND detected_at = ? LIMIT 1'
+        'SELECT 1 FROM departures WHERE icao24 = ? ' +
+        'AND detected_at BETWEEN ? AND ? LIMIT 1'
     )
     const now = new Date().toISOString()
     const insertMany = database.transaction(items => {
+        let inserted = 0
         for (const departure of items) {
-            if (exists.get(departure.icao24, departure.directionObservedAt)) {
-                continue
-            }
+            const detectedAt = Date.parse(departure.directionObservedAt)
+            const earliest = new Date(
+                detectedAt - DEPARTURE_DEDUP_WINDOW_MS
+            ).toISOString()
+            const latest = new Date(
+                detectedAt + DEPARTURE_DEDUP_WINDOW_MS
+            ).toISOString()
+            if (exists.get(departure.icao24, earliest, latest)) continue
+
             insert.run({
                 icao24: departure.icao24,
                 callsign: departure.callsign,
                 detectedAt: departure.directionObservedAt,
                 direction: departure.direction,
-                runwayEstimate: departure.direction === 'eastbound' ? EASTBOUND_RUNWAY : WESTBOUND_RUNWAY,
+                runwayEstimate: departure.direction === 'eastbound'
+                    ? EASTBOUND_RUNWAY
+                    : WESTBOUND_RUNWAY,
                 confidence: departure.detectionConfidence,
                 evidence: JSON.stringify(departure),
                 source,
                 createdAt: now
             })
+            inserted++
         }
+        return inserted
     })
-    insertMany(departures)
+    return insertMany(departures)
 }
 
 module.exports = {

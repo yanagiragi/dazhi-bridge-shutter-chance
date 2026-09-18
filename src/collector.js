@@ -1,3 +1,9 @@
+const { detectDepartures, storeDepartures } = require('./detector')
+
+// Time windows bound departure processing and raw-observation retention.
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
+const DEPARTURE_LOOKBACK_MS = 15 * 60 * 1000
+const DEFAULT_OBSERVATION_RETENTION_DAYS = 7
 // Retry policy and status codes: finite retries with a short linear backoff.
 const DEFAULT_MAX_RETRIES = 2
 const DEFAULT_RETRY_DELAY_MS = 250
@@ -27,6 +33,7 @@ const UPDATE_RUN_SQL = `
         last_http_status = @status,
         remaining_credits = @credits,
         last_error = @error,
+        state = @state,
         updated_at = @updated
     WHERE id = 1
 `
@@ -54,7 +61,8 @@ class Collector {
         now = () => new Date(),
         maxRetries = DEFAULT_MAX_RETRIES,
         retryDelayMs = DEFAULT_RETRY_DELAY_MS,
-        source = 'opensky'
+        source = 'opensky',
+        observationRetentionDays = DEFAULT_OBSERVATION_RETENTION_DAYS
     }) {
         this.database = database
         this.provider = provider
@@ -62,8 +70,22 @@ class Collector {
         this.maxRetries = maxRetries
         this.retryDelayMs = retryDelayMs
         this.source = source
+        this.observationRetentionDays = observationRetentionDays
+        this.lastCleanupDate = null
         this.insertObservation = database.prepare(INSERT_OBSERVATION_SQL)
         this.updateRun = database.prepare(UPDATE_RUN_SQL)
+        this.deleteOldObservations = database.prepare(
+            'DELETE FROM aircraft_observations WHERE observed_at < ?'
+        )
+        this.selectRecentObservations = database.prepare(
+            'SELECT observed_at AS observedAt, icao24, callsign, ' +
+            'latitude, longitude, baro_altitude AS baroAltitude, ' +
+            'geo_altitude AS geoAltitude, velocity, ' +
+            'true_track AS trueTrack, vertical_rate AS verticalRate, ' +
+            'on_ground AS onGround FROM aircraft_observations ' +
+            'WHERE observed_at >= ? AND source = ? ' +
+            'ORDER BY observed_at ASC'
+        )
     }
 
     async runOnce (params = {}) {
@@ -99,21 +121,67 @@ class Collector {
         })
 
         insertMany(result.aircraft)
+        const storedDepartures = this.processDepartures(observedAt)
+        const deletedObservations = this.cleanupObservations(observedAt)
         this.updateRun.run({
             success: observedAt,
             failure: null,
             status: HTTP_OK,
             credits: result.remainingCredits,
             error: null,
+            state: 'ok',
             updated: observedAt
         })
 
         return {
             observedAt,
             count: result.aircraft.length,
+            storedDepartures,
+            deletedObservations,
             remainingCredits: result.remainingCredits
         }
     }
+
+    processDepartures (observedAt) {
+        const cutoff = new Date(
+            Date.parse(observedAt) - DEPARTURE_LOOKBACK_MS
+        ).toISOString()
+        const states = this.selectRecentObservations.all(cutoff, this.source)
+        return storeDepartures(
+            this.database,
+            detectDepartures(states),
+            this.source
+        )
+    }
+
+    cleanupObservations (observedAt) {
+        // ISO 8601 timestamps begin with the 10-character date YYYY-MM-DD.
+        const cleanupDate = observedAt.slice(0, 10)
+        if (this.lastCleanupDate === cleanupDate) return 0
+
+        const cutoff = new Date(
+            Date.parse(observedAt) -
+                this.observationRetentionDays * MILLISECONDS_PER_DAY
+        ).toISOString()
+        const deleted = this.deleteOldObservations.run(cutoff).changes
+        this.lastCleanupDate = cleanupDate
+        return deleted
+    }
+
+    recordOutsideSchedule () {
+        const updatedAt = this.now().toISOString()
+        this.updateRun.run({
+            success: null,
+            failure: null,
+            status: null,
+            credits: null,
+            error: null,
+            state: 'outside_schedule',
+            updated: updatedAt
+        })
+        return updatedAt
+    }
+
 
     shouldRetry (error, attempt) {
         const retryable = !error.status ||
@@ -131,6 +199,7 @@ class Collector {
             status: error.status || null,
             credits: null,
             error: error.message.slice(0, MAX_RECORDED_ERROR_LENGTH),
+            state: 'error',
             updated: failedAt
         })
     }

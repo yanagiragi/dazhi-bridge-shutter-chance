@@ -63,6 +63,15 @@ const MIGRATIONS = Object.freeze([
             INSERT OR IGNORE INTO collector_runs (id, updated_at)
                 VALUES (1, datetime('now'));
         `
+    },
+    {
+        version: 2,
+        name: 'collector_operational_state',
+        sql: [
+            'ALTER TABLE collector_runs',
+            "ADD COLUMN state TEXT NOT NULL DEFAULT 'never'",
+            "CHECK (state IN ('never', 'ok', 'error', 'outside_schedule'));"
+        ].join(' ')
     }
 ])
 

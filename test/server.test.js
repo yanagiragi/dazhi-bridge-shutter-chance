@@ -25,7 +25,7 @@ test('health endpoint reports database and schema status', async t => {
     const payload = await response.json()
     assert.equal(payload.status, 'ok')
     assert.equal(payload.database, 'ok')
-    assert.equal(payload.schemaVersion, 1)
+    assert.equal(payload.schemaVersion, 2)
     assert.match(payload.checkedAt, /^\d{4}-\d{2}-\d{2}T/)
 })
 
@@ -64,9 +64,9 @@ test('status API returns advice and collector state', async t => {
     )
     opened.database.prepare(`
         UPDATE collector_runs
-        SET last_success_at = ?, remaining_credits = ?
+        SET last_success_at = ?, remaining_credits = ?, state = ?
         WHERE id = 1
-    `).run('2026-09-16T03:59:30.000Z', 99)
+    `).run('2026-09-16T03:59:30.000Z', 99, 'ok')
     const server = createServer({
         ...opened,
         timezone: 'Asia/Taipei',
@@ -89,6 +89,7 @@ test('status API returns advice and collector state', async t => {
     assert.equal(payload.advice.today.westbound, 1)
     assert.equal(payload.advice.confidence, 'low')
     assert.equal(payload.collector.remaining_credits, 99)
+    assert.equal(payload.collector.state, 'ok')
     assert.equal('icao24' in payload.advice.recentDepartures[0], false)
 
     const configResponse = await fetch(
