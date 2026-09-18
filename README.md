@@ -1,7 +1,7 @@
 # Dazhi Bridge Shutter Chance
 
 This repository contains the Songshan Airport takeoff-direction service described
-in [PLANS.md](PLANS.md).
+in [PLANS.md](docs/PLANS.md).
 
 ## Current status
 
@@ -37,6 +37,8 @@ Configuration is supplied through environment variables:
 - `COLLECTOR_ACTIVE_START`: inclusive local start time, default `06:30`
 - `COLLECTOR_ACTIVE_END`: exclusive local end time, default `21:00`
 - `OBSERVATION_RETENTION_DAYS`: local raw-observation retention, default `7`
+- `DEPARTURE_DETAILS_MODE`: `summary` (public-safe default) or `precise` (private deployments only)
+- `OPERATOR_CATALOG_PATH`: operator-name catalog, default `./config/operators.json` locally and `/config/operators.json` in Compose
 - `OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET`: optional OpenSky OAuth credentials; used only with `opensky`
 - `OPENSKY_LAMIN`, `OPENSKY_LAMAX`, `OPENSKY_LOMIN`, `OPENSKY_LOMAX`: OpenSky bounding box
 - `ADSB_FI_LATITUDE`, `ADSB_FI_LONGITUDE`, `ADSB_FI_DISTANCE_NM`: adsb.fi point query; defaults to Songshan and 5 NM
@@ -46,10 +48,84 @@ altitude, speed, and climb-rate values are converted from feet, knots, and
 feet per minute to the project’s metre and metre-per-second data model. Set
 `AIRCRAFT_DATA_PROVIDER=opensky` to switch providers manually.
 
-adsb.fi permits personal, non-commercial API use and requires attribution with a
-link to its home page. The dashboard displays that attribution whenever adsb.fi is
-the configured provider. Raw observations remain local and are not intended for
-public redistribution.
+The adsb.fi Open Data terms permit personal, non-commercial API use, prohibit
+licensing or selling the data or service, and require attribution with a link to
+the [adsb.fi home page](https://adsb.fi/). The dashboard displays that attribution
+whenever adsb.fi is configured. The terms do not expressly grant a right to
+republish position points, so this project conservatively keeps precise tracks in
+private deployments. Public snapshots must use `summary` unless adsb.fi gives
+written permission. See the [official API terms](https://github.com/adsbfi/opendata/blob/main/README.md#terms).
+
+The dashboard preserves each raw ADS-B callsign as an "ADS-B identifier". If its
+three-letter prefix is in `config/operators.json`, it also displays a neutral,
+localized airline-name badge. It does not infer an IATA flight number; numeric,
+registration-like, and unknown identifiers remain unchanged without a badge.
+For cataloged airlines, the operator's verified IATA code converts the ADS-B
+callsign to a Flightradar24 flight-history URL. For example, `EVA192` becomes
+`https://www.flightradar24.com/data/flights/br192`. A cataloged operator without
+an assigned IATA code falls back to its ICAO callsign, so `VJT719` becomes
+`https://www.flightradar24.com/data/flights/vjt719`. The service does not guess
+an IATA code for unknown operators or a flight-instance URL.
+
+### Maintaining operator names
+
+The operator catalog is one versioned JSON file shared by the audit command,
+server, and dashboard. To handle an unknown identifier such as `ESR888`:
+
+1. Find candidates in the database:
+
+```sh
+npm run audit:callsigns
+docker compose exec app npm run audit:callsigns
+```
+
+   The Compose command reads `/data/dazhi.sqlite` from the existing named volume;
+   the database does not need to be copied out of the container. Add
+   `-- --resolve` locally, or append `--resolve` to the Compose command, to query
+   the FAA designator list and Wikidata for reviewable candidate fields:
+
+```sh
+npm run audit:callsigns -- --resolve
+docker compose exec app npm run audit:callsigns -- --resolve
+```
+
+   Resolution is read-only: it prints JSON with source URLs, source records,
+   review notes, and a `suggestedFields` object using the same shape as one
+   `operators.json` entry so it can be reviewed and copied directly. It never
+   edits `operators.json`. FAA is
+   the current-designator source; CC0-licensed Wikidata supplements IATA codes
+   and localized names. Conflicting or missing records remain explicitly marked
+   for human review.
+2. Treat `ESR` as a candidate, not `ESR888` as an allowlist entry. Verify the
+   three-letter designator and operator name against an authoritative ICAO or
+   national aviation source. Leave an unconfirmed value on the unknown fallback.
+3. Add one `ESR` object to the `operators` array in `config/operators.json`. Supply
+   its verified two-character `iataCode`, or `null` when the operator has no
+   assigned IATA designator, plus non-empty `short` and `name` values for both
+   `en` and `zh-TW`.
+4. Run `npm test` and `npm run lint`, then commit the catalog change so its history
+   and rollback remain in Git.
+5. With Docker Compose, reload the browser. The host catalog is mounted read-only
+   at `/config/operators.json`, and the server validates and reads it for each
+   catalog request, so no image rebuild or container restart is required.
+
+Keep a normal repository or host backup before editing. To roll back, restore the
+previous valid JSON from Git and reload the page. A malformed, duplicate,
+or incompletely translated catalog is rejected instead of being partially served.
+
+Compose intentionally mounts only the catalog, not all of `public/`, so a host
+directory cannot hide the image's frontend assets. A standalone `docker run` uses
+the catalog bundled in the image and therefore requires an image rebuild after a
+catalog change unless an alternate file is mounted read-only and selected with
+`OPERATOR_CATALOG_PATH`.
+
+Departure detail responses default to `summary`, which contains detector evidence
+but no exact coordinates. The detector stores the same track points in SQLite in
+both modes; the mode controls only whether the HTTP response and dashboard expose
+those coordinates.
+Use `DEPARTURE_DETAILS_MODE=precise` only on a private LAN, VPN, or access-controlled
+deployment. Future GitHub Pages snapshots must remain on the summary allowlist and
+must never publish precise tracks without written provider permission.
 
 The SQLite database is created automatically. The initialization enables WAL mode
 and applies idempotent numbered migrations. The database and all parent directories
@@ -85,8 +161,10 @@ curl http://127.0.0.1:3000/api/v1/status
 
 A normal provider failure is recorded as `error` and retried on the next scheduled
 poll. `outside_schedule` is expected downtime, not a provider failure. After
-changing configuration or updating the checkout, run `docker compose up -d --build`
-again; the named volume and migration history are preserved.
+changing application configuration or updating source code, run
+`docker compose up -d --build` again; the named volume and migration history are
+preserved. Operator-catalog-only changes are the exception described above and do
+not require rebuilding.
 
 ### SQLite backup and restore
 
@@ -129,7 +207,7 @@ docker compose config
 
 ## API
 
-- `GET /api/v1/status`: today summary, recommendation, freshness and collector state.
+- `GET /api/v1/status`: today summary, recommendation, freshness, collector state, and the configured collection schedule. Outside collection hours, `advice.collectionSchedule.nextStartAt` contains the next active-window start as an ISO timestamp.
 - Public departure responses omit ICAO24 and raw observations; they expose only the approved minimal departure fields.
 - `GET /api/v1/departures?limit=10`: recent departures with the same recommendation payload. `limit` accepts 1-50.
 - Set `API_BEARER_TOKEN` to require `Authorization: Bearer <token>` on API routes. `/healthz` remains public.

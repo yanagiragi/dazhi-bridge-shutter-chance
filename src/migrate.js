@@ -1,5 +1,5 @@
-const { loadConfig } = require('./config')
-const { openDatabase } = require('./database')
+import { loadConfig } from './config.js'
+import { openDatabase } from './database.js'
 
 const config = loadConfig()
 const opened = openDatabase(config.databasePath)

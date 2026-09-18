@@ -4,7 +4,7 @@
     "private": true,
     "description": "Estimate Songshan Airport takeoff direction for Dazhi Bridge photography",
     "license": "UNLICENSED",
-    "type": "commonjs",
+    "type": "module",
     "engines": {
         "node": ">=22"
     },
@@ -13,8 +13,9 @@
         "migrate": "node src/migrate.js",
         "backup": "node src/backup.js",
         "restore": "node src/restore.js",
+        "audit:callsigns": "node scripts/audit-callsigns.js",
         "test": "node --test",
-        "lint": "eslint src/ test/ public/"
+        "lint": "eslint src/ test/ public/ scripts/"
     },
     "dependencies": {
         "better-sqlite3": "^13.0.3"

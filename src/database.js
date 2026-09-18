@@ -1,10 +1,10 @@
 // SQLite waits briefly for another writer before returning SQLITE_BUSY (milliseconds).
 const SQLITE_BUSY_TIMEOUT_MS = 5000
 
-const Database = require('better-sqlite3')
-const { dirname } = require('node:path')
-const { mkdirSync } = require('node:fs')
-const { applyMigrations } = require('./migrations')
+import Database from 'better-sqlite3'
+import { dirname } from 'node:path'
+import { mkdirSync } from 'node:fs'
+import { applyMigrations } from './migrations.js'
 
 function openDatabase (filename) {
     mkdirSync(dirname(filename), { recursive: true })
@@ -21,6 +21,6 @@ function openDatabase (filename) {
     }
 }
 
-module.exports = {
+export {
     openDatabase
 }

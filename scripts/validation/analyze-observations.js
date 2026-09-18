@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 
 function usage () {
-    console.log('Usage: node spike/analyze-observations.mjs <observations.jsonl>')
+    console.log('Usage: node scripts/validation/analyze-observations.js <observations.jsonl>')
 }
 
 function median (values) {

@@ -1,8 +1,8 @@
-const test = require('node:test')
-const assert = require('node:assert/strict')
-const Database = require('better-sqlite3')
-const { applyMigrations } = require('../src/migrations')
-const { detectDepartures, storeDepartures } = require('../src/detector')
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import Database from 'better-sqlite3'
+import { applyMigrations } from '../src/migrations.js'
+import { detectDepartures, storeDepartures } from '../src/detector.js'
 
 function state ({
     time,
@@ -38,6 +38,88 @@ function departureStates ({ direction }) {
         verticalRate: 8
     }))
 }
+
+function cal261State ({
+    observedAt, latitude, longitude, altitude, trueTrack, verticalRate
+}) {
+    return {
+        icao24: '8990a1',
+        callsign: 'CAL261',
+        observedAt,
+        latitude,
+        longitude,
+        baroAltitude: altitude,
+        geoAltitude: altitude,
+        velocity: 73,
+        trueTrack,
+        verticalRate,
+        onGround: false
+    }
+}
+
+const cal261LandingStates = [
+    cal261State({
+        observedAt: '2026-09-17T07:09:48.444Z',
+        latitude: 25.071592,
+        longitude: 121.496818,
+        altitude: 274.32,
+        trueTrack: 92.4,
+        verticalRate: -4.22656
+    }),
+    cal261State({
+        observedAt: '2026-09-17T07:10:18.436Z',
+        latitude: 25.070801,
+        longitude: 121.518739,
+        altitude: 160.02,
+        trueTrack: 92.45,
+        verticalRate: -3.57632
+    }),
+    cal261State({
+        observedAt: '2026-09-17T07:10:48.440Z',
+        latitude: 25.070382,
+        longitude: 121.530554,
+        altitude: 91.44,
+        trueTrack: 92.82,
+        verticalRate: -2.92608
+    }),
+    cal261State({
+        observedAt: '2026-09-17T07:11:18.441Z',
+        latitude: 25.069748,
+        longitude: 121.547902,
+        altitude: 22.86,
+        trueTrack: 92.82,
+        verticalRate: 5.52704
+    }),
+    cal261State({
+        observedAt: '2026-09-17T07:11:48.447Z',
+        latitude: 25.069748,
+        longitude: 121.547902,
+        altitude: 22.86,
+        trueTrack: null,
+        verticalRate: 5.52704
+    })
+]
+
+test('does not reinterpret the CAL261 landing as the window advances', () => {
+    for (let startIndex = 0; startIndex < cal261LandingStates.length; startIndex++) {
+        const states = cal261LandingStates.slice(startIndex)
+        const observedAt = states.at(-1).observedAt
+
+        assert.equal(
+            detectDepartures(states, { observedAt }).length,
+            0,
+            'window starting at sample '
+        )
+    }
+})
+
+test('does not process a stale departure candidate', () => {
+    const states = departureStates({ direction: 'eastbound' })
+
+    assert.equal(detectDepartures(states, {
+        observedAt: '2026-09-16T00:06:00.000Z'
+    }).length, 0)
+})
 
 test('detects eastbound departure', () => {
     const [departure] = detectDepartures(departureStates({ direction: 'eastbound' }))
@@ -112,6 +194,19 @@ test('stores a departure once with runway estimate', () => {
         direction: 'westbound',
         runway_estimate: '28',
         detection_confidence: 'high'
+    })
+    const points = database.prepare(`
+        SELECT sequence, observed_at, latitude, longitude, altitude
+        FROM departure_track_points
+        ORDER BY sequence
+    `).all()
+    assert.equal(points.length, 4)
+    assert.deepEqual(points[0], {
+        sequence: 0,
+        observed_at: '2026-09-16T00:00:00.000Z',
+        latitude: 25.07,
+        longitude: 121.6,
+        altitude: 300
     })
     database.close()
 })

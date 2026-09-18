@@ -1,12 +1,10 @@
 #!/usr/bin/env node
 
-import { createRequire } from 'node:module'
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 
-const require = createRequire(import.meta.url)
-const { normalizeAdsbFiAircraft } = require('../src/adsbfi')
-const { detectDepartures } = require('../src/detector')
+import { normalizeAdsbFiAircraft } from '../../src/adsbfi.js'
+import { detectDepartures } from '../../src/detector.js'
 
 const RADII_NM = Object.freeze([3, 5, 10, 25])
 const LOW_ALTITUDE_FEET = 5000
@@ -92,7 +90,7 @@ function analyzeRadius (samples, radiusNm) {
 async function main () {
     const inputPath = process.argv[2]
     if (!inputPath || inputPath === '--help') {
-        console.log('Usage: node spike/analyze-adsbfi.mjs <observations.jsonl>')
+        console.log('Usage: node scripts/validation/analyze-adsbfi.js <observations.jsonl>')
         process.exit(inputPath ? 0 : 1)
     }
 

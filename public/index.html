@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dazhi Bridge Flight Watch</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/styles.css">
     <script defer src="/app.js"></script>
 </head>
@@ -12,20 +13,37 @@
         <header class="topbar">
             <div>
                 <h1 data-i18n="title">Dazhi Bridge Flight Watch</h1>
-                <p class="live">
-                    <span class="dot"></span>
-                    <span data-i18n="live">Live data</span>
-                    <span id="updated">--</span>
-                </p>
+                <div
+                    id="collection-status"
+                    class="collection-status"
+                    data-state="waiting"
+                    aria-live="polite"
+                >
+                    <span class="status-dot" aria-hidden="true"></span>
+                    <div>
+                        <p id="collection-status-title">--</p>
+                        <p id="collection-status-detail">--</p>
+                    </div>
+                </div>
             </div>
-            <button
-                id="language"
-                class="language"
-                type="button"
-                aria-label="Switch language"
-            >
-                EN
-            </button>
+            <div class="header-actions">
+                <button
+                    id="theme"
+                    class="header-button"
+                    type="button"
+                    aria-label="Switch to dark mode"
+                >
+                    Dark
+                </button>
+                <button
+                    id="language"
+                    class="header-button"
+                    type="button"
+                    aria-label="Switch language"
+                >
+                    EN
+                </button>
+            </div>
         </header>
 
         <section
@@ -33,7 +51,6 @@
             class="recommendation"
             aria-live="polite"
         >
-            <div class="direction-icon" id="direction-icon">&larr;</div>
             <div>
                 <p class="eyebrow" data-i18n="recommendation">
                     Recommendation

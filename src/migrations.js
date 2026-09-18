@@ -72,6 +72,26 @@ const MIGRATIONS = Object.freeze([
             "ADD COLUMN state TEXT NOT NULL DEFAULT 'never'",
             "CHECK (state IN ('never', 'ok', 'error', 'outside_schedule'));"
         ].join(' ')
+    },
+    {
+        version: 3,
+        name: 'departure_track_points',
+        sql: `
+            CREATE TABLE departure_track_points (
+                departure_id INTEGER NOT NULL,
+                sequence INTEGER NOT NULL,
+                observed_at TEXT NOT NULL,
+                latitude REAL NOT NULL,
+                longitude REAL NOT NULL,
+                altitude REAL,
+                PRIMARY KEY (departure_id, sequence),
+                FOREIGN KEY (departure_id) REFERENCES departures (id)
+                    ON DELETE CASCADE
+            );
+
+            CREATE INDEX idx_departure_track_points_observed_at
+                ON departure_track_points (observed_at);
+        `
     }
 ])
 
@@ -113,7 +133,7 @@ function applyMigrations (database) {
     return MIGRATIONS.at(-1)?.version ?? 0
 }
 
-module.exports = {
+export {
     MIGRATIONS,
     applyMigrations
 }

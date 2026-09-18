@@ -104,20 +104,22 @@
 
 ## 條款查核
 
-依 2026-09-17 的 adsb.fi 官方 API 文件：
+依 2026-09-19 再次查核的 [adsb.fi 官方 API 條款](https://github.com/adsbfi/opendata/blob/main/README.md#terms) 與 [adsb.fi 首頁](https://adsb.fi/)：
 
 - 公開端點限制為每秒 1 次；本專案預定 30 秒一次，實測則為 5 或 10 秒一次，均低於限制。
 - 資料只允許個人、非商業使用，不得授權、販售、出租資料或服務。
 - 使用時必須標示 adsb.fi，並連結至其首頁。
 - 服務不保證持續可用，供應方可暫停服務或存取權。
-- 條款沒有明確說明公開重新發布原始或衍生資料的權利。自架個人使用符合文字上的預期用途；公開網站或 GitHub Pages 應先取得 adsb.fi 對衍生 departure 資料公開方式的確認。
+- 條款沒有明確授予公開重新發布位置點或衍生航跡的權利。這不等同於明文禁止所有衍生結果，但也不足以支持公開 precise 航跡。
+
+工程上採保守邊界：私人自架、LAN／VPN 或受存取控制的服務可使用 `precise`；公開網站與 GitHub Pages 僅可使用不含座標及航跡的 `summary`。在取得 adsb.fi 書面同意前，不公開位置點、簡化航跡或原始 observation。公開 summary 是否能正式發布仍於階段 9 前確認，且必須保留 adsb.fi 署名與首頁連結。
 
 以上是工程上的條款風險整理，不是法律意見。
 
 ## 最終決策
 
 - `adsbfi` 為正式 collector 的預設 provider；`opensky` 保留為可手動切換的選配來源，不做自動 failover。
-- 個人、非商業的自架服務可進入階段 8；公開網站／GitHub Pages 的資料再發布權另行向 adsb.fi 確認。
+- 個人、非商業的自架服務可使用 `precise`；公開網站／GitHub Pages 限制為不含位置與航跡的 `summary`，其衍生 departure 再發布權仍須另行向 adsb.fi 確認。
 - 公開 departure 僅提供時間、callsign、方向、跑道推定、信心與 source；不公開 ICAO24 或原始 observation。
 - provider 為 `adsbfi` 時，網頁 footer 顯示並連結 adsb.fi；使用 OpenSky 時不顯示 adsb.fi 署名。
 - 原始 observation 僅在自架環境保存 7 天，departure 長期保存；不公開或提交原始航跡。

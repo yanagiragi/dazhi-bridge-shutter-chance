@@ -9,21 +9,19 @@ const sharedRules = {
     semi: ['error', 'never']
 }
 
-module.exports = [
+export default [
     {
         files: ['src/**/*.js', 'test/**/*.js'],
         languageOptions: {
             ecmaVersion: 'latest',
-            sourceType: 'commonjs',
+            sourceType: 'module',
             globals: {
                 AbortSignal: 'readonly',
                 Buffer: 'readonly',
                 URL: 'readonly',
                 console: 'readonly',
                 fetch: 'readonly',
-                module: 'readonly',
                 process: 'readonly',
-                require: 'readonly'
             }
         },
         rules: sharedRules

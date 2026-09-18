@@ -24,7 +24,7 @@ function feetPerMinuteToMetresPerSecond (value) {
         : value * FEET_PER_MINUTE_TO_METRES_PER_SECOND
 }
 
-module.exports = {
+export {
     feetPerMinuteToMetresPerSecond,
     feetToMetres,
     knotsToMetresPerSecond,

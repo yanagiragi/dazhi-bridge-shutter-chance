@@ -8,10 +8,12 @@ services:
     environment:
       PORT: 3000
       DATABASE_PATH: /data/dazhi.sqlite
+      OPERATOR_CATALOG_PATH: /config/operators.json
       TZ: ${TZ:-Asia/Taipei}
       WEB_ENABLED: ${WEB_ENABLED:-true}
       API_ENABLED: ${API_ENABLED:-true}
       API_BEARER_TOKEN: ${API_BEARER_TOKEN:-}
+      DEPARTURE_DETAILS_MODE: ${DEPARTURE_DETAILS_MODE:-summary}
       AIRCRAFT_DATA_PROVIDER: ${AIRCRAFT_DATA_PROVIDER:-adsbfi}
       COLLECTOR_INTERVAL_MS: ${COLLECTOR_INTERVAL_MS:-30000}
       COLLECTOR_ACTIVE_TIME_ZONE: ${COLLECTOR_ACTIVE_TIME_ZONE:-Asia/Taipei}
@@ -29,6 +31,7 @@ services:
       ADSB_FI_DISTANCE_NM: ${ADSB_FI_DISTANCE_NM:-5}
     volumes:
       - dazhi-data:/data
+      - ./config/operators.json:/config/operators.json:ro
     restart: unless-stopped
     stop_grace_period: 30s
     logging:

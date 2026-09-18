@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 
 const analyzerPath = fileURLToPath(
-    new URL('./analyze-observations.mjs', import.meta.url)
+    new URL('../../scripts/validation/analyze-observations.js', import.meta.url)
 )
 
 function state ({

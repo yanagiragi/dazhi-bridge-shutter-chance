@@ -1,6 +1,6 @@
 # GitHub Pages 無 API 部署規畫
 
-> 狀態：已排入 `PLANS.md` 的選配階段 9；尚未開始實作。
+> 狀態：已排入 [`PLANS.md`](../PLANS.md) 的選配階段 9；尚未開始實作。
 
 ## 1. 結論
 
@@ -34,11 +34,14 @@ GitHub Pages 依賴階段 8 已完成的自架 collector、SQLite、detector 與
 
 ### GitHub Pages
 
-只發布 HTML、CSS、browser JavaScript、locale JSON、圖片與 `data/status.json`。不可發布：
+只發布 HTML、CSS、browser JavaScript、locale JSON、由
+`config/operators.json` 匯出的 operator catalog、圖片與
+`data/status.json`。不可發布：
 
 - SQLite database 或原始 observations。
 - 資料來源 credential、Bearer token 或 GitHub publisher credential。
 - collector logs、stack trace 或內部錯誤細節。
+- departure track coordinates、簡化航跡或其他 `precise` mode 欄位；在取得 provider 書面同意前，Pages 固定使用 `summary`。
 
 ## 3. 靜態快照契約
 
@@ -81,6 +84,8 @@ exporter 應重用現有 advice service，不在瀏覽器重寫判斷規則。�
 瀏覽器以 `generatedAt`、`collectorLastSuccessAt` 與 `collectorStatus` 區分正常更新、時段外暫停和真正 stale，避免將預期的排程暫停誤認為故障。
 
 公開欄位 allowlist、資料來源授權、必要 attribution 與資料保存限制由 `PLANS.md` 階段 7.5 決定。exporter 必須只使用該 allowlist，不能直接序列化資料庫 row 或原始 provider response。
+
+依 2026-09-19 的 adsb.fi 官方條款查核，個人非商業使用需署名並連結 adsb.fi，但條款沒有明確授予公開重新發布位置點或衍生航跡的權利。因此 Pages exporter 不接受 `precise` 輸入，也不輸出座標或航跡。這是保守的工程風險界線，不代表法律意見；即使未來取得公開 summary 的確認，precise 仍需獨立的書面許可。
 
 ## 4. 快照發布
 

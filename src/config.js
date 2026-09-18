@@ -1,3 +1,8 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
 // Default HTTP port for local and container deployments.
 const DEFAULT_PORT = 3000
 
@@ -21,7 +26,20 @@ const DEFAULT_COLLECTOR_ACTIVE_END = '21:00'
 // Raw observations are local diagnostic data retained for this many days.
 const DEFAULT_OBSERVATION_RETENTION_DAYS = 7
 
-const path = require('node:path')
+// Departure-detail modes control whether exact track coordinates leave the
+// server. Summary is safe for public deployments; precise is for private use.
+const DEPARTURE_DETAILS_MODE_SUMMARY = 'summary'
+const DEPARTURE_DETAILS_MODE_PRECISE = 'precise'
+const DEFAULT_DEPARTURE_DETAILS_MODE = DEPARTURE_DETAILS_MODE_SUMMARY
+
+// Bundled operator names are the local-development default. Deployments may
+// point this at a read-only mounted catalog to update names without rebuilding.
+const DEFAULT_OPERATOR_CATALOG_PATH = path.join(
+    __dirname,
+    '..',
+    'config',
+    'operators.json'
+)
 
 function booleanSetting (value, name, fallback) {
     if (value === undefined || value === '') return fallback
@@ -76,19 +94,37 @@ function aircraftDataProvider (value) {
     return provider
 }
 
+function departureDetailsMode (value) {
+    const mode = (value || DEFAULT_DEPARTURE_DETAILS_MODE).toLowerCase()
+    if (mode !== DEPARTURE_DETAILS_MODE_SUMMARY &&
+        mode !== DEPARTURE_DETAILS_MODE_PRECISE) {
+        throw new Error(
+            'DEPARTURE_DETAILS_MODE must be summary or precise'
+        )
+    }
+    return mode
+}
+
 function loadConfig (env = process.env) {
     const port = positiveInteger(env.PORT || String(DEFAULT_PORT), 'PORT')
     const databasePath = path.resolve(
         env.DATABASE_PATH || './data/dazhi.sqlite'
     )
+    const operatorCatalogPath = path.resolve(
+        env.OPERATOR_CATALOG_PATH || DEFAULT_OPERATOR_CATALOG_PATH
+    )
 
     return {
         port,
         databasePath,
+        operatorCatalogPath,
         timezone: env.TZ || 'Asia/Taipei',
         apiBearerToken: env.API_BEARER_TOKEN || null,
         webEnabled: booleanSetting(env.WEB_ENABLED, 'WEB_ENABLED', true),
         apiEnabled: booleanSetting(env.API_ENABLED, 'API_ENABLED', true),
+        departureDetailsMode: departureDetailsMode(
+            env.DEPARTURE_DETAILS_MODE
+        ),
         aircraftDataProvider: aircraftDataProvider(
             env.AIRCRAFT_DATA_PROVIDER
         ),
@@ -139,9 +175,16 @@ function loadConfig (env = process.env) {
     }
 }
 
-module.exports = {
+export {
     AIRCRAFT_PROVIDER_ADSB_FI,
     AIRCRAFT_PROVIDER_OPENSKY,
+    DEPARTURE_DETAILS_MODE_PRECISE,
+    DEPARTURE_DETAILS_MODE_SUMMARY,
+    DEFAULT_COLLECTOR_ACTIVE_END,
+    DEFAULT_COLLECTOR_ACTIVE_START,
+    DEFAULT_COLLECTOR_ACTIVE_TIME_ZONE,
+    DEFAULT_OPERATOR_CATALOG_PATH,
     aircraftDataProvider,
+    departureDetailsMode,
     loadConfig
 }

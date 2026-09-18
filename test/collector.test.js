@@ -1,13 +1,18 @@
-const test = require('node:test')
-const assert = require('node:assert/strict')
-const Database = require('better-sqlite3')
-const { AdsbFiClient } = require('../src/adsbfi')
-const { applyMigrations } = require('../src/migrations')
-const { Collector } = require('../src/collector')
-const { loadConfig } = require('../src/config')
-const { OpenSkyClient } = require('../src/opensky')
-const { isWithinActiveWindow, startScheduler } = require('../src/scheduler')
-const { collectionParams, createCollectionTask } = require('../src/server')
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import Database from 'better-sqlite3'
+import { AdsbFiClient } from '../src/adsbfi.js'
+import { applyMigrations } from '../src/migrations.js'
+import { Collector } from '../src/collector.js'
+import { loadConfig } from '../src/config.js'
+import { OpenSkyClient } from '../src/opensky.js'
+import {
+    isWithinActiveWindow,
+    nextActiveWindowStart,
+    startScheduler
+} from '../src/scheduler.js'
+import { collectionParams, createCollectionTask } from '../src/server.js'
 
 test('OpenSky client caches token and returns canonical aircraft', async () => {
     let calls = 0
@@ -226,6 +231,17 @@ test('collector detects departures, deduplicates reprocessing, and removes old o
         database.prepare('SELECT count(*) AS count FROM departures').get().count,
         1
     )
+    const storedDeparture = database.prepare(
+        'SELECT detection_confidence, evidence_json FROM departures'
+    ).get()
+    assert.equal(storedDeparture.detection_confidence, 'high')
+    assert.equal(JSON.parse(storedDeparture.evidence_json).directionSamples, 3)
+    assert.equal(
+        database.prepare(
+            'SELECT COUNT(*) AS count FROM departure_track_points'
+        ).get().count,
+        3
+    )
     assert.equal(
         database.prepare('SELECT state FROM collector_runs').get().state,
         'ok'
@@ -283,6 +299,13 @@ test('configuration selects provider-specific query geometry', () => {
     assert.equal(defaultConfig.collectorActiveStart, '06:30')
     assert.equal(defaultConfig.collectorActiveEnd, '21:00')
     assert.equal(defaultConfig.observationRetentionDays, 7)
+    assert.equal(defaultConfig.departureDetailsMode, 'summary')
+    assert.match(defaultConfig.operatorCatalogPath, /config\/operators\.json$/)
+    assert.equal(
+        loadConfig({ OPERATOR_CATALOG_PATH: './custom-operators.json' })
+            .operatorCatalogPath,
+        join(process.cwd(), 'custom-operators.json')
+    )
     assert.deepEqual(collectionParams(adsbFiConfig), {
         latitude: 25.1,
         longitude: 121.6,
@@ -300,6 +323,15 @@ test('configuration selects provider-specific query geometry', () => {
     assert.throws(
         () => loadConfig({ COLLECTOR_ACTIVE_TIME_ZONE: 'Mars/Base' }),
         /must be a valid IANA timezone/
+    )
+    assert.equal(
+        loadConfig({ DEPARTURE_DETAILS_MODE: 'precise' })
+            .departureDetailsMode,
+        'precise'
+    )
+    assert.throws(
+        () => loadConfig({ DEPARTURE_DETAILS_MODE: 'hidden' }),
+        /must be summary or precise/
     )
 })
 
@@ -322,6 +354,27 @@ test('active window uses Taipei time and excludes the end boundary', () => {
         ...schedule,
         date: new Date('2026-09-17T13:00:00.000Z')
     }), false)
+})
+
+test('next active window supports daytime and overnight schedules', () => {
+    assert.equal(nextActiveWindowStart({
+        date: new Date('2026-09-17T13:00:00.000Z'),
+        timezone: 'Asia/Taipei',
+        start: '06:30',
+        end: '21:00'
+    }), '2026-09-17T22:30:00.000Z')
+    assert.equal(nextActiveWindowStart({
+        date: new Date('2026-09-17T04:00:00.000Z'),
+        timezone: 'Asia/Taipei',
+        start: '21:00',
+        end: '06:30'
+    }), '2026-09-17T13:00:00.000Z')
+    assert.equal(nextActiveWindowStart({
+        date: new Date('2026-09-17T14:00:00.000Z'),
+        timezone: 'Asia/Taipei',
+        start: '21:00',
+        end: '06:30'
+    }), null)
 })
 
 test('collection task polls immediately when active and records one pause transition', async () => {

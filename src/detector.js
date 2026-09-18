@@ -2,13 +2,17 @@
 // Expected domain: non-negative; 0.005 degrees is roughly 500 m near Taipei.
 const MIN_DIRECTION_DELTA = 0.005
 
+// Minimum altitude gain required across takeoff-direction samples (metres).
+// Expected domain: positive; 50 m rejects stationary or contradictory samples.
+const MIN_CLIMB_ALTITUDE_GAIN = 50
+
 // True-track windows used when longitude displacement is unavailable (degrees, 0-360).
 const EASTBOUND_TRACK_MIN = 60
 const EASTBOUND_TRACK_MAX = 130
 const WESTBOUND_TRACK_MIN = 230
 const WESTBOUND_TRACK_MAX = 310
 
-// OpenSky vertical rate thresholds (metres per second).
+// Canonical vertical-rate thresholds shared by all providers (metres per second).
 const CLIMBING_VERTICAL_RATE_MIN = 1
 const DESCENDING_VERTICAL_RATE_MAX = -1
 
@@ -16,8 +20,15 @@ const DESCENDING_VERTICAL_RATE_MAX = -1
 const MAX_INITIAL_ALTITUDE = 1500
 const MAX_CANDIDATE_ALTITUDE = 2000
 
+// Milliseconds in one second, used when comparing observation timestamps.
+const MILLISECONDS_PER_SECOND = 1000
+
 // A gap longer than this starts a new track segment (seconds).
 const MAX_TRACK_GAP_SECONDS = 120
+
+// A candidate older than one track-gap interval is stale reprocessed history.
+// Expected domain: positive seconds; tied to the track segmentation boundary.
+const MAX_DEPARTURE_CANDIDATE_AGE_SECONDS = MAX_TRACK_GAP_SECONDS
 
 // Sample-count thresholds; all are positive integers.
 const MIN_STATES_FOR_DIRECTION = 2
@@ -87,7 +98,7 @@ function splitTracks (states) {
         const previous = current.at(-1)
         const gap = previous
             ? (Date.parse(state.observedAt) -
-                Date.parse(previous.observedAt)) / 1000
+                Date.parse(previous.observedAt)) / MILLISECONDS_PER_SECOND
             : 0
 
         if (gap > MAX_TRACK_GAP_SECONDS || (landed && !state.onGround)) {
@@ -137,25 +148,49 @@ function summarizeTrack (states) {
             .slice(0, INITIAL_DIRECTION_SAMPLE_LIMIT)
     }
 
+    const firstDirectionState = directionStates[0]
+    const lastDirectionState = directionStates.at(-1)
+    const firstDirectionIndex = firstDirectionState
+        ? positioned.indexOf(firstDirectionState)
+        : -1
+    const hasPriorDescent = firstDirectionIndex > 0 && positioned
+        .slice(0, firstDirectionIndex)
+        .some(state => state.verticalRate <= DESCENDING_VERTICAL_RATE_MAX)
+    const initialAltitude = firstDirectionState
+        ? firstDirectionState.geoAltitude ?? firstDirectionState.baroAltitude
+        : null
+    const finalAltitude = lastDirectionState
+        ? lastDirectionState.geoAltitude ?? lastDirectionState.baroAltitude
+        : null
+    const altitudeGain = Number.isFinite(initialAltitude) && Number.isFinite(finalAltitude)
+        ? finalAltitude - initialAltitude
+        : null
     const { direction, longitudeDelta } = directionFromStates(directionStates)
+    const trackPoints = directionStates.map(state => ({
+        observedAt: state.observedAt,
+        latitude: state.latitude,
+        longitude: state.longitude,
+        altitude: state.geoAltitude ?? state.baroAltitude ?? null
+    }))
 
     return {
         icao24: states[0].icao24,
         callsign: states.find(state => state.callsign)?.callsign ?? null,
         samples: states.length,
         directionSamples: directionStates.length,
-        directionObservedAt: directionStates[0]?.observedAt ?? null,
+        directionObservedAt: firstDirectionState?.observedAt ?? null,
         firstSeen: states[0].observedAt,
         lastSeen: states.at(-1).observedAt,
-        initialAltitude: directionStates[0]
-            ? directionStates[0].geoAltitude ?? directionStates[0].baroAltitude
-            : null,
+        initialAltitude,
         minimumAltitude: altitudes.length ? Math.min(...altitudes) : null,
         maximumAltitude: altitudes.length ? Math.max(...altitudes) : null,
         medianVerticalRate,
+        altitudeGain,
+        hasPriorDescent,
         longitudeDelta,
         direction,
-        movement
+        movement,
+        trackPoints
     }
 }
 
@@ -176,14 +211,30 @@ function detectTracks (states) {
         .map(summarizeTrack)
 }
 
-function detectDepartures (states) {
+function departureCandidateIsFresh (track, observedAt) {
+    if (!observedAt) return true
+
+    const ageSeconds = (Date.parse(observedAt) - Date.parse(track.lastSeen)) / MILLISECONDS_PER_SECOND
+    return Number.isFinite(ageSeconds) &&
+        ageSeconds >= 0 &&
+        ageSeconds <= MAX_DEPARTURE_CANDIDATE_AGE_SECONDS
+}
+
+function detectDepartures (states, { observedAt } = {}) {
     return detectTracks(states)
         .filter(track =>
             track.samples >= MIN_DEPARTURE_SAMPLES &&
+            track.directionSamples >= MIN_STATES_FOR_DIRECTION &&
             track.movement === 'climbing' &&
+            !track.hasPriorDescent &&
             track.minimumAltitude !== null &&
             track.minimumAltitude <= MAX_CANDIDATE_ALTITUDE &&
-            track.direction !== 'unknown'
+            track.altitudeGain !== null &&
+            track.altitudeGain >= MIN_CLIMB_ALTITUDE_GAIN &&
+            Number.isFinite(track.longitudeDelta) &&
+            Math.abs(track.longitudeDelta) >= MIN_DIRECTION_DELTA &&
+            track.direction !== 'unknown' &&
+            departureCandidateIsFresh(track, observedAt)
         )
         .map(track => ({
             ...track,
@@ -204,10 +255,43 @@ function storeDepartures (database, departures, source = 'opensky') {
         )
     `)
     const exists = database.prepare(
-        'SELECT 1 FROM departures WHERE icao24 = ? ' +
+        'SELECT id FROM departures WHERE icao24 = ? ' +
         'AND detected_at BETWEEN ? AND ? LIMIT 1'
     )
+    const updateEvidence = database.prepare(`
+        UPDATE departures
+        SET callsign = COALESCE(@callsign, callsign),
+            detection_confidence = @confidence,
+            evidence_json = @evidence
+        WHERE id = @id
+    `)
+    const countTrackPoints = database.prepare(
+        'SELECT COUNT(*) AS count FROM departure_track_points ' +
+        'WHERE departure_id = ?'
+    )
+    const deleteTrackPoints = database.prepare(
+        'DELETE FROM departure_track_points WHERE departure_id = ?'
+    )
+    const insertTrackPoint = database.prepare(`
+        INSERT INTO departure_track_points (
+            departure_id, sequence, observed_at, latitude, longitude, altitude
+        ) VALUES (?, ?, ?, ?, ?, ?)
+    `)
     const now = new Date().toISOString()
+
+    function storeTrackPoints (departureId, trackPoints) {
+        trackPoints.forEach((point, sequence) => {
+            insertTrackPoint.run(
+                departureId,
+                sequence,
+                point.observedAt,
+                point.latitude,
+                point.longitude,
+                point.altitude
+            )
+        })
+    }
+
     const insertMany = database.transaction(items => {
         let inserted = 0
         for (const departure of items) {
@@ -218,9 +302,27 @@ function storeDepartures (database, departures, source = 'opensky') {
             const latest = new Date(
                 detectedAt + DEPARTURE_DEDUP_WINDOW_MS
             ).toISOString()
-            if (exists.get(departure.icao24, earliest, latest)) continue
+            const existing = exists.get(departure.icao24, earliest, latest)
+            const { trackPoints, ...evidence } = departure
 
-            insert.run({
+            if (existing) {
+                const storedPointCount = countTrackPoints.get(
+                    existing.id
+                ).count
+                if (trackPoints.length > storedPointCount) {
+                    updateEvidence.run({
+                        id: existing.id,
+                        callsign: departure.callsign,
+                        confidence: departure.detectionConfidence,
+                        evidence: JSON.stringify(evidence)
+                    })
+                    deleteTrackPoints.run(existing.id)
+                    storeTrackPoints(existing.id, trackPoints)
+                }
+                continue
+            }
+
+            const result = insert.run({
                 icao24: departure.icao24,
                 callsign: departure.callsign,
                 detectedAt: departure.directionObservedAt,
@@ -229,10 +331,11 @@ function storeDepartures (database, departures, source = 'opensky') {
                     ? EASTBOUND_RUNWAY
                     : WESTBOUND_RUNWAY,
                 confidence: departure.detectionConfidence,
-                evidence: JSON.stringify(departure),
+                evidence: JSON.stringify(evidence),
                 source,
                 createdAt: now
             })
+            storeTrackPoints(Number(result.lastInsertRowid), trackPoints)
             inserted++
         }
         return inserted
@@ -240,7 +343,7 @@ function storeDepartures (database, departures, source = 'opensky') {
     return insertMany(departures)
 }
 
-module.exports = {
+export {
     detectDepartures,
     detectTracks,
     directionFromStates,

@@ -8,7 +8,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 const DEFAULTS = Object.freeze({
     samples: 20,
     intervalSeconds: 30,
-    output: 'spike/data/observations.jsonl',
+    output: 'data/validation/observations.jsonl',
     bounds: {
         lamin: 24.98,
         lomin: 121.42,
@@ -42,7 +42,7 @@ const STATE_FIELDS = Object.freeze({
 
 function usage () {
     console.log(`Usage:
-  node spike/collect-opensky.mjs [options]
+  node scripts/validation/collect-opensky.js [options]
 
 Options:
   --samples <count>       Number of polls (default: ${DEFAULTS.samples})

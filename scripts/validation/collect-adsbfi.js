@@ -10,7 +10,7 @@ const MINIMUM_INTERVAL_SECONDS = 1
 const DEFAULTS = Object.freeze({
     samples: 360,
     intervalSeconds: 5,
-    output: 'spike/data/adsbfi-observations.jsonl',
+    output: 'data/validation/adsbfi-observations.jsonl',
     latitude: 25.069722,
     longitude: 121.5525,
     radiusNm: 25
@@ -18,7 +18,7 @@ const DEFAULTS = Object.freeze({
 
 function usage () {
     console.log(`Usage:
-  node spike/collect-adsbfi.mjs [options]
+  node scripts/validation/collect-adsbfi.js [options]
 
 Options:
   --samples <count>       Number of polls (default: ${DEFAULTS.samples})

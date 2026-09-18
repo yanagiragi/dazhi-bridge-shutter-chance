@@ -1,9 +1,9 @@
-const {
+import {
     feetPerMinuteToMetresPerSecond,
     feetToMetres,
     knotsToMetresPerSecond,
     optionalNumber
-} = require('./utils')
+} from './utils.js'
 
 // adsb.fi exposes an ADS-B Exchange-compatible point query in nautical miles.
 const DEFAULT_BASE_URL = 'https://opendata.adsb.fi/api/v3'
@@ -86,7 +86,7 @@ class AdsbFiClient {
     }
 }
 
-module.exports = {
+export {
     AdsbFiClient,
     normalizeAdsbFiAircraft
 }

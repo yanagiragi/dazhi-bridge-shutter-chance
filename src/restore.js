@@ -1,6 +1,6 @@
-const { copyFileSync, existsSync, rmSync, renameSync } = require('node:fs')
-const { resolve } = require('node:path')
-const { loadConfig } = require('./config')
+import { copyFileSync, existsSync, rmSync, renameSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { loadConfig } from './config.js'
 
 const config = loadConfig()
 const source = process.argv[2]

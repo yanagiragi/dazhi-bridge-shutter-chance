@@ -1,7 +1,7 @@
-const { existsSync, mkdirSync } = require('node:fs')
-const { dirname, resolve } = require('node:path')
-const { loadConfig } = require('./config')
-const { openDatabase } = require('./database')
+import { existsSync, mkdirSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { loadConfig } from './config.js'
+import { openDatabase } from './database.js'
 
 const config = loadConfig()
 const destination = process.argv[2]

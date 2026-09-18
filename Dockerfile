@@ -11,7 +11,8 @@ RUN npm ci --omit=dev
 
 COPY src ./src
 COPY public ./public
-COPY README.md PLANS.md ./
+COPY config ./config
+COPY scripts/audit-callsigns.js ./scripts/audit-callsigns.js
 
 FROM node:24-bookworm-slim
 

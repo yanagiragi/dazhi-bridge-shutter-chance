@@ -165,7 +165,7 @@ class OpenSkyClient {
     }
 }
 
-module.exports = {
+export {
     OpenSkyClient,
     normalizeOpenSkyState
 }

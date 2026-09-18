@@ -1,4 +1,4 @@
-const { detectDepartures, storeDepartures } = require('./detector')
+import { detectDepartures, storeDepartures } from './detector.js'
 
 // Time windows bound departure processing and raw-observation retention.
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
@@ -12,7 +12,7 @@ const HTTP_TOO_MANY_REQUESTS = 429
 const HTTP_SERVER_ERROR_MIN = 500
 const MAX_RECORDED_ERROR_LENGTH = 500
 
-const { setTimeout: delay } = require('node:timers/promises')
+import { setTimeout as delay } from 'node:timers/promises'
 
 const INSERT_OBSERVATION_SQL = `
     INSERT INTO aircraft_observations (
@@ -149,7 +149,7 @@ class Collector {
         const states = this.selectRecentObservations.all(cutoff, this.source)
         return storeDepartures(
             this.database,
-            detectDepartures(states),
+            detectDepartures(states, { observedAt }),
             this.source
         )
     }
@@ -205,7 +205,7 @@ class Collector {
     }
 }
 
-module.exports = {
+export {
     Collector,
     normalizeAircraft
 }

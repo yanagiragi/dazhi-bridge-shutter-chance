@@ -5,15 +5,10 @@ const RECENT_DEPARTURE_LIMIT = 10
 const FRESH_DATA_MAX_AGE_MS = 15 * 60 * 1000
 const STALE_DATA_MAX_AGE_MS = 60 * 60 * 1000
 
-// Minimum departure counts required for the high and medium confidence tiers.
-const HIGH_CONFIDENCE_MIN_SAMPLES = 5
-const MEDIUM_CONFIDENCE_MIN_SAMPLES = 3
-
-// Westbound share thresholds, expressed as ratios in the inclusive range [0, 1].
-const HIGH_WESTBOUND_RATIO = 0.6
-const MEDIUM_WESTBOUND_RATIO = 0.5
-// Percentage conversion used only for human-readable reason text.
-const PERCENT_SCALE = 100
+// Recommendation trend uses the newest three departures from today's history.
+const RECOMMENDATION_TREND_LIMIT = 3
+// Medium confidence needs a prior directional sample in addition to the latest one.
+const MEDIUM_CONFIDENCE_MIN_DIRECTIONAL_DEPARTURES = 2
 
 
 function localDateKey (date, timezone) {
@@ -49,39 +44,43 @@ function freshnessFor (lastSuccessAt, now, collectorState = null) {
     return 'expired'
 }
 
-function recommendationFor ({ westboundCount, totalCount, freshness }) {
-    if (freshness === 'unknown' || freshness === 'expired' ||
-        freshness === 'outside_schedule' || totalCount === 0) {
+function recommendationFor ({ recentDepartures, freshness }) {
+    if (freshness !== 'fresh' || recentDepartures.length === 0) {
         return {
             recommendation: 'insufficient-data',
             confidence: 'insufficient',
-            reason: 'Not enough fresh departure data for today'
+            reason: 'The collector is not fresh or has no departure data today'
         }
     }
 
-    const ratio = westboundCount / totalCount
-    if (totalCount >= HIGH_CONFIDENCE_MIN_SAMPLES &&
-        ratio >= HIGH_WESTBOUND_RATIO) {
+    const trend = recentDepartures.slice(0, RECOMMENDATION_TREND_LIMIT)
+    const allRecentDeparturesAreWestbound =
+        trend.length === RECOMMENDATION_TREND_LIMIT &&
+        trend.every(item => item.direction === 'westbound')
+    if (allRecentDeparturesAreWestbound) {
         return {
             recommendation: 'good-opportunity',
             confidence: 'high',
-            reason: `Today westbound share is ${Math.round(ratio * PERCENT_SCALE)}%`
+            reason: 'The latest three departures were westbound'
         }
     }
 
-    if (totalCount >= MEDIUM_CONFIDENCE_MIN_SAMPLES &&
-        ratio >= MEDIUM_WESTBOUND_RATIO) {
+    const directionalDepartureCount = recentDepartures.filter(item =>
+        item.direction === 'eastbound' || item.direction === 'westbound'
+    ).length
+    if (recentDepartures[0].direction === 'westbound' &&
+        directionalDepartureCount >= MEDIUM_CONFIDENCE_MIN_DIRECTIONAL_DEPARTURES) {
         return {
             recommendation: 'possible-opportunity',
             confidence: 'medium',
-            reason: `Recent westbound share is ${Math.round(ratio * PERCENT_SCALE)}%`
+            reason: 'The latest departure was westbound'
         }
     }
 
     return {
         recommendation: 'low-opportunity',
         confidence: 'low',
-        reason: 'Recent westbound share is low'
+        reason: 'The latest departure was not westbound or there is only one directional sample'
     }
 }
 
@@ -103,15 +102,14 @@ function buildAdvice ({
     const todayDepartures = pastDepartures.filter(departure =>
         localDateKey(new Date(departure.detected_at), timezone) === today
     )
-    const recentDepartures = sortNewestFirst(pastDepartures)
+    const recentDepartures = sortNewestFirst(todayDepartures)
         .slice(0, recentLimit)
     const westboundCount = todayDepartures.filter(departure =>
         departure.direction === 'westbound'
     ).length
     const freshness = freshnessFor(lastSuccessAt, now, collectorState)
     const recommendation = recommendationFor({
-        westboundCount,
-        totalCount: todayDepartures.length,
+        recentDepartures,
         freshness
     })
 
@@ -135,7 +133,7 @@ function buildAdvice ({
     }
 }
 
-module.exports = {
+export {
     buildAdvice,
     freshnessFor,
     localDateKey,

@@ -26,7 +26,7 @@ Collection was deliberately bounded. The first run stopped normally after 120
 samples. The second run was stopped after 59 samples when the tenth independent
 departure had four direction samples.
 
-Raw JSONL is kept locally under `spike/data/` and is ignored by Git. It contains
+Raw JSONL is kept locally under `data/validation/` and is ignored by Git. It contains
 no OpenSky credentials.
 
 ## Collection results
@@ -130,12 +130,12 @@ No alternative ADS-B provider or private receiver is required at this point.
 ## Reproduction
 
 ```sh
-node spike/collect-opensky.mjs --samples 20 --interval 30 \
-  --output spike/data/observations.jsonl
+node scripts/validation/collect-opensky.js --samples 20 --interval 30 \
+  --output data/validation/observations.jsonl
 
-node spike/analyze-observations.mjs spike/data/observations.jsonl
+node scripts/validation/analyze-observations.js data/validation/observations.jsonl
 
-node --test spike/analyze-observations.test.mjs
+node --test test/validation/analyze-observations.test.js
 ```
 
 The analyzer is still a feasibility tool. Its thresholds and event segmentation
