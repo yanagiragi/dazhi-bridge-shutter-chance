@@ -11,6 +11,13 @@
     const EMPTY_VALUE = '--'
     // Dashboard endpoints and the provider ID that requires attribution.
     const DASHBOARD_STATUS_URL = './dashboard-data.json'
+    // Favicon colors identify the current dashboard data/detail mode.
+    const FAVICON_PATHS = {
+        summary: './favicon-summary.svg',
+        precise: './favicon-precise.svg',
+        snapshot: './favicon-snapshot.svg'
+    }
+
     const SNAPSHOT_STATUS_URL = './data/status.json'
     const WEB_CONFIG_URL = './web-config.json'
     const OPERATORS_URL = './operators.json'
@@ -726,11 +733,22 @@
         if (latestPayload) render(latestPayload)
     }
 
+    function applyFavicon (config) {
+        const favicon = document.querySelector('link[rel="icon"]')
+        if (!favicon) return
+
+        const mode = config?.dataSource === 'snapshot'
+            ? 'snapshot'
+            : config?.departureDetailsMode
+        favicon.href = FAVICON_PATHS[mode] || FAVICON_PATHS.summary
+    }
+
     async function loadWebConfig () {
         const response = await fetch(WEB_CONFIG_URL)
         if (!response.ok) throw new Error('Unable to load web configuration')
 
         const config = await response.json()
+        applyFavicon(config)
         element('adsb-fi-attribution').hidden =
             config.aircraftDataProvider !== ADSB_FI_PROVIDER
         return config
