@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dazhi Bridge Flight Watch</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+    <script defer src="./app.js"></script>
+</head>
+<body>
+    <main class="shell">
+        <header class="topbar">
+            <div>
+                <h1 data-i18n="title">Dazhi Bridge Flight Watch</h1>
+                <div
+                    id="collection-status"
+                    class="collection-status"
+                    data-state="waiting"
+                    aria-live="polite"
+                >
+                    <span class="status-dot" aria-hidden="true"></span>
+                    <div>
+                        <p id="collection-status-title">--</p>
+                        <p id="collection-status-detail">--</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button
+                    id="theme"
+                    class="header-button"
+                    type="button"
+                    aria-label="Switch to dark mode"
+                >
+                    Dark
+                </button>
+                <button
+                    id="language"
+                    class="header-button"
+                    type="button"
+                    aria-label="Switch language"
+                >
+                    EN
+                </button>
+            </div>
+        </header>
+
+        <section
+            id="recommendation"
+            class="recommendation"
+            aria-live="polite"
+        >
+            <div>
+                <p class="eyebrow" data-i18n="recommendation">
+                    Recommendation
+                </p>
+                <h2 id="recommendation-title">--</h2>
+                <p id="recommendation-reason">--</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 data-i18n="today">Today</h2>
+            <div class="stats">
+                <div>
+                    <span data-i18n="westbound">Westbound</span>
+                    <strong id="westbound">--</strong>
+                </div>
+                <div>
+                    <span data-i18n="eastbound">Eastbound</span>
+                    <strong id="eastbound">--</strong>
+                </div>
+                <div>
+                    <span data-i18n="unknown">Unknown</span>
+                    <strong id="unknown">--</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 data-i18n="recent">Recent departures</h2>
+            <div id="departures" class="departures">
+                <p class="muted" data-i18n="loading">Loading...</p>
+            </div>
+        </section>
+
+        <footer>
+            <span id="adsb-fi-attribution" hidden>
+                <span data-i18n="source">Source</span>:
+                <a href="https://adsb.fi/">adsb.fi</a>
+                |
+            </span>
+            <span id="data-source">--</span> ·
+            <span data-i18n="lastUpdated">Last updated</span>
+            <span id="footer-updated">--</span>
+        </footer>
+    </main>
+</body>
+</html>
