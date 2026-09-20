@@ -210,12 +210,14 @@ docker compose config
 - `GET /api/v1/status`: today summary, recommendation, freshness, collector state, and the configured collection schedule. Outside collection hours, `advice.collectionSchedule.nextStartAt` contains the next active-window start as an ISO timestamp.
 - Public departure responses omit ICAO24 and raw observations; they expose only the approved minimal departure fields.
 - `GET /api/v1/departures?limit=10`: recent departures with the same recommendation payload. `limit` accepts 1-50.
-- Set `API_BEARER_TOKEN` to require `Authorization: Bearer <token>` on API routes. `/healthz` remains public.
+- Set `API_BEARER_TOKEN` to require `Authorization: Bearer <token>` on `/api/v1/*` routes. The dashboard data endpoint and `/healthz` remain outside this API authentication boundary.
 - `WEB_ENABLED` and `API_ENABLED` independently enable the public dashboard and API (both default to `true`).
 
 ## Web dashboard
 
-Open `http://127.0.0.1:3000/` for the mobile-first dashboard. The interface supports Traditional Chinese and English; use the language button in the header. It reads the same `/api/v1/status` result as the Telegram integration.
+Open `http://127.0.0.1:3000/` for the mobile-first dashboard. The interface supports Traditional Chinese and English; use the language button in the header. It reads `/dashboard-data.json`, while integrations such as a Telegram bot use the separately protected `/api/v1/*` routes.
+
+`/dashboard-data.json` is enabled only with `WEB_ENABLED=true` and follows `DEPARTURE_DETAILS_MODE`. A `precise` self-hosted dashboard must therefore be protected as a whole by a reverse proxy, VPN, or private network; use `summary` for a publicly reachable dashboard.
 
 ## GitHub Pages snapshot
 

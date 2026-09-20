@@ -250,6 +250,31 @@ test('departures API validates limit and bearer token', async t => {
     })
 })
 
+test('dashboard data remains available when API bearer auth is enabled', async t => {
+    const directory = mkdtempSync(join(tmpdir(), 'dazhi-http-'))
+    const opened = openDatabase(join(directory, 'dazhi.sqlite'))
+    const server = createServer({
+        ...opened,
+        apiToken: 'telegram-secret'
+    })
+
+    t.after(() => {
+        server.close()
+        opened.database.close()
+        rmSync(directory, { recursive: true, force: true })
+    })
+    await new Promise(resolve => server.listen(0, resolve))
+    const baseUrl = 'http://127.0.0.1:' + server.address().port
+
+    const dashboard = await fetch(baseUrl + '/dashboard-data.json')
+    assert.equal(dashboard.status, 200)
+    assert.equal(typeof (await dashboard.json()).advice, 'object')
+    assert.equal((await fetch(baseUrl + '/api/v1/status')).status, 401)
+    assert.equal((await fetch(baseUrl + '/api/v1/status', {
+        headers: { authorization: 'Bearer telegram-secret' }
+    })).status, 200)
+})
+
 
 test('dashboard serves the localized web shell', async t => {
     const directory = mkdtempSync(join(tmpdir(), 'dazhi-http-'))
@@ -450,5 +475,6 @@ test('web and API can be disabled independently', async t => {
     await new Promise(resolve => server.listen(0, resolve))
     const baseUrl = `http://127.0.0.1:${server.address().port}`
     assert.equal((await fetch(`${baseUrl}/`)).status, 404)
+    assert.equal((await fetch(baseUrl + '/dashboard-data.json')).status, 404)
     assert.equal((await fetch(`${baseUrl}/api/v1/status`)).status, 200)
 })

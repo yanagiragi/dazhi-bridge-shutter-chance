@@ -38,9 +38,10 @@ const MAX_DEPARTURE_QUERY_LIMIT = 50
 
 // Fetch enough history for advice statistics while keeping each request bounded.
 const DEPARTURE_QUERY_FETCH_LIMIT = 500
-// Static dashboard directory and its public runtime provider-config endpoint.
+// Static dashboard directory and its unauthenticated same-origin endpoints.
 const PUBLIC_ROOT = join(fileURLToPath(new URL('../public', import.meta.url)))
 const WEB_CONFIG_PATH = '/web-config.json'
+const DASHBOARD_DATA_PATH = '/dashboard-data.json'
 
 function json (response, statusCode, payload) {
     const body = JSON.stringify(payload)
@@ -232,6 +233,26 @@ function createServer ({
             } catch {
                 return json(response, HTTP_INTERNAL_SERVER_ERROR, {
                     error: 'operator_catalog_unavailable'
+                })
+            }
+        }
+
+        if (webEnabled && request.method === 'GET' &&
+            requestUrl.pathname === DASHBOARD_DATA_PATH) {
+            try {
+                const snapshot = querySnapshot(
+                    database,
+                    now(),
+                    timezone,
+                    DEFAULT_DEPARTURE_QUERY_LIMIT,
+                    departureDetailsMode,
+                    collectorSchedule
+                )
+                return json(response, HTTP_OK, snapshot)
+            } catch (error) {
+                return json(response, HTTP_BAD_REQUEST, {
+                    error: 'bad_request',
+                    message: error.message
                 })
             }
         }
