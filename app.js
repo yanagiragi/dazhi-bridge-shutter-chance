@@ -24,6 +24,9 @@
     const ADSB_FI_PROVIDER = 'adsbfi'
     const FLIGHTRADAR24_BASE_URL =
         'https://www.flightradar24.com/data/flights/'
+    const FLIGHTRADAR24_CALLSIGN_BASE_URL =
+        'https://www.flightradar24.com/'
+
 
     // Active-window values use a validated 24-hour HH:mm representation.
     const SCHEDULE_TIME_PATTERN = /^([01][0-9]|2[0-3]):([0-5][0-9])$/
@@ -292,18 +295,25 @@
     function flightradar24Url (callsign) {
         if (typeof callsign !== 'string') return null
 
-        const match = callsign.trim().toUpperCase().match(
-            AIRLINE_CALLSIGN_PATTERN
-        )
-        if (!match) return null
+        const normalizedCallsign = callsign.trim().toUpperCase()
+        const match = normalizedCallsign.match(AIRLINE_CALLSIGN_PATTERN)
+        const operator = match ? operatorsByCode.get(match[1]) : null
 
-        const operator = operatorsByCode.get(match[1])
-        if (!operator) return null
+        if (match && operator) {
+            const flightPrefix = operator.iataCode || match[1]
+            const flightDesignator = flightPrefix + match[2]
+            return FLIGHTRADAR24_BASE_URL +
+                encodeURIComponent(flightDesignator.toLowerCase())
+        }
 
-        const flightPrefix = operator.iataCode || match[1]
-        const flightDesignator = flightPrefix + match[2]
-        return FLIGHTRADAR24_BASE_URL +
-            encodeURIComponent(flightDesignator.toLowerCase())
+        if (!normalizedCallsign ||
+            NUMERIC_CALLSIGN_PATTERN.test(normalizedCallsign) ||
+            !/^[A-Z0-9]+$/.test(normalizedCallsign)) {
+            return null
+        }
+
+        return FLIGHTRADAR24_CALLSIGN_BASE_URL +
+            encodeURIComponent(normalizedCallsign)
     }
 
     function createFlightVerificationLink (callsign) {
