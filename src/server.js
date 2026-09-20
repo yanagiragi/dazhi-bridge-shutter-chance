@@ -203,7 +203,9 @@ function createServer ({
             '/index.html': ['index.html', 'text/html; charset=utf-8'],
             '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
             '/styles.css': ['styles.css', 'text/css; charset=utf-8'],
-            '/favicon.svg': ['favicon.svg', 'image/svg+xml'],
+            '/favicon-summary.svg': ['favicon-summary.svg', 'image/svg+xml'],
+            '/favicon-precise.svg': ['favicon-precise.svg', 'image/svg+xml'],
+            '/favicon-snapshot.svg': ['favicon-snapshot.svg', 'image/svg+xml'],
             '/locales/en.json': [
                 'locales/en.json',
                 'application/json; charset=utf-8'

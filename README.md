@@ -217,6 +217,8 @@ docker compose config
 
 Open `http://127.0.0.1:3000/` for the mobile-first dashboard. The interface supports Traditional Chinese and English; use the language button in the header. It reads `/dashboard-data.json`, while integrations such as a Telegram bot use the separately protected `/api/v1/*` routes.
 
+`summary` uses a rose aircraft favicon (`#dc7b81`), `precise` uses blue (`#69b7ff`), and GitHub Pages `snapshot` uses gray (`#A6A6A6`). The aircraft silhouette is identical in all modes.
+
 `/dashboard-data.json` is enabled only with `WEB_ENABLED=true` and follows `DEPARTURE_DETAILS_MODE`. A `precise` self-hosted dashboard must therefore be protected as a whole by a reverse proxy, VPN, or private network; use `summary` for a publicly reachable dashboard.
 
 ## GitHub Pages snapshot

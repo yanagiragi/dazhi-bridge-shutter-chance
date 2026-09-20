@@ -296,7 +296,7 @@ test('dashboard serves the localized web shell', async t => {
     assert.match(html, /id="adsb-fi-attribution" hidden/)
     assert.match(html, /id="theme"/)
     assert.match(html, /id="collection-status"/)
-    assert.match(html, /rel="icon" href="\.\/favicon\.svg"/)
+    assert.match(html, /rel="icon" href="\.\/favicon-snapshot\.svg"/)
     assert.doesNotMatch(html, /data-i18n="live"/)
 
     const assetBaseUrl = 'http://127.0.0.1:' + server.address().port
@@ -332,6 +332,7 @@ test('dashboard serves the localized web shell', async t => {
     )
     assert.match(script, /flightradar24Url/)
     assert.match(script, /www\.flightradar24\.com\/data\/flights\//)
+    assert.match(script, /FLIGHTRADAR24_CALLSIGN_BASE_URL/)
     assert.doesNotMatch(script, /details\.icaoOperatorCode/)
     assert.doesNotMatch(
         script,
@@ -351,12 +352,23 @@ test('dashboard serves the localized web shell', async t => {
         true
     )
 
-    const faviconResponse = await fetch(assetBaseUrl + '/favicon.svg')
+    const faviconResponse = await fetch(assetBaseUrl + '/favicon-summary.svg')
     assert.equal(faviconResponse.status, 200)
     assert.equal(faviconResponse.headers.get('content-type'), 'image/svg+xml')
     const favicon = await faviconResponse.text()
     assert.match(favicon, /class="aircraft"/)
     assert.match(favicon, /rotate\(45 32 32\)/)
+
+    const faviconModes = [
+        ['favicon-summary.svg', '#dc7b81'],
+        ['favicon-precise.svg', '#69b7ff'],
+        ['favicon-snapshot.svg', '#A6A6A6']
+    ]
+    for (const [asset, color] of faviconModes) {
+        const modeResponse = await fetch(assetBaseUrl + '/' + asset)
+        assert.equal(modeResponse.status, 200)
+        assert.match(await modeResponse.text(), new RegExp(color))
+    }
 
     const configResponse = await fetch(
         'http://127.0.0.1:' + server.address().port +
