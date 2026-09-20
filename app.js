@@ -10,7 +10,7 @@
     const REFRESH_INTERVAL_MS = 60 * 1000
     const EMPTY_VALUE = '--'
     // Dashboard endpoints and the provider ID that requires attribution.
-    const API_STATUS_URL = './api/v1/status'
+    const DASHBOARD_STATUS_URL = './dashboard-data.json'
     const SNAPSHOT_STATUS_URL = './data/status.json'
     const WEB_CONFIG_URL = './web-config.json'
     const OPERATORS_URL = './operators.json'
@@ -752,7 +752,7 @@
         try {
             const endpoint = dataSource === 'snapshot'
                 ? SNAPSHOT_STATUS_URL
-                : API_STATUS_URL
+                : DASHBOARD_STATUS_URL
             const response = await fetch(endpoint, { cache: 'no-store' })
             if (!response.ok) throw new Error('Request failed')
             const payload = await response.json()
