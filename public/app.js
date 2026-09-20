@@ -10,9 +10,10 @@
     const REFRESH_INTERVAL_MS = 60 * 1000
     const EMPTY_VALUE = '--'
     // Dashboard endpoints and the provider ID that requires attribution.
-    const API_STATUS_URL = '/api/v1/status'
-    const WEB_CONFIG_URL = '/web-config.json'
-    const OPERATORS_URL = '/operators.json'
+    const API_STATUS_URL = './api/v1/status'
+    const SNAPSHOT_STATUS_URL = './data/status.json'
+    const WEB_CONFIG_URL = './web-config.json'
+    const OPERATORS_URL = './operators.json'
     const ADSB_FI_PROVIDER = 'adsbfi'
     const FLIGHTRADAR24_BASE_URL =
         'https://www.flightradar24.com/data/flights/'
@@ -65,6 +66,7 @@
     let theme = getInitialTheme()
     document.documentElement.dataset.theme = theme
     let latestPayload = null
+    let dataSource = 'api'
     let trackDiagramSequence = 0
 
     function getInitialLanguage () {
@@ -237,7 +239,7 @@
     async function loadTranslations (locale) {
         if (translations[locale]) return
 
-        const response = await fetch(`/locales/${locale}.json`)
+        const response = await fetch(`./locales/${locale}.json`)
         if (!response.ok) {
             throw new Error(`Unable to load locale: ${locale}`)
         }
@@ -695,7 +697,14 @@
         element('eastbound').textContent = advice.today.eastbound
         element('unknown').textContent = advice.today.unknown
         renderCollectionStatus(advice, payload.collector)
-        element('footer-updated').textContent = formatTime(advice.lastSuccessAt)
+        element('data-source').textContent = translate(
+            dataSource === 'snapshot'
+                ? 'dataSource.snapshot'
+                : 'dataSource.live'
+        )
+        element('footer-updated').textContent = formatTime(
+            payload.generatedAt || advice.lastSuccessAt
+        )
         renderDepartures(advice.recentDepartures)
     }
 
@@ -709,6 +718,11 @@
             node.textContent = translate(node.dataset.i18n)
         })
 
+        element('data-source').textContent = translate(
+            dataSource === 'snapshot'
+                ? 'dataSource.snapshot'
+                : 'dataSource.live'
+        )
         if (latestPayload) render(latestPayload)
     }
 
@@ -719,13 +733,32 @@
         const config = await response.json()
         element('adsb-fi-attribution').hidden =
             config.aircraftDataProvider !== ADSB_FI_PROVIDER
+        return config
     }
 
-    async function loadData () {
+    function snapshotPayload (snapshot) {
+        return {
+            advice: snapshot.advice,
+            generatedAt: snapshot.generatedAt,
+            collector: {
+                state: snapshot.collectorStatus,
+                last_success_at: snapshot.collectorLastSuccessAt,
+                updated_at: snapshot.generatedAt
+            }
+        }
+    }
+
+    async function loadData (dataSource = 'api') {
         try {
-            const response = await fetch(API_STATUS_URL)
+            const endpoint = dataSource === 'snapshot'
+                ? SNAPSHOT_STATUS_URL
+                : API_STATUS_URL
+            const response = await fetch(endpoint, { cache: 'no-store' })
             if (!response.ok) throw new Error('Request failed')
-            render(await response.json())
+            const payload = await response.json()
+            render(dataSource === 'snapshot'
+                ? snapshotPayload(payload)
+                : payload)
         } catch {
             element('recommendation-title').textContent = translate('error')
             renderCollectionError()
@@ -752,14 +785,15 @@
     }
 
     async function start () {
-        await Promise.all([
+        const [, config] = await Promise.all([
             loadTranslations(language),
             loadWebConfig(),
             loadOperators()
         ])
         applyLanguage()
-        await loadData()
-        setInterval(loadData, REFRESH_INTERVAL_MS)
+        dataSource = config?.dataSource || 'api'
+        await loadData(dataSource)
+        setInterval(() => loadData(dataSource), REFRESH_INTERVAL_MS)
     }
 
     element('theme').addEventListener('click', changeTheme)

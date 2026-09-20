@@ -1,6 +1,6 @@
 # 大直橋飛機拍攝機會判斷系統：實作計畫
 
-> 狀態：階段 4 的真實向西起飛驗收、階段 8 與階段 8.5 均已完成；階段 9 尚未開始。
+> 狀態：階段 4 真實向西起飛驗收、階段 8、階段 8.5 與階段 9 均已完成；階段 10 尚未開始。
 >
 > 本文件記錄目前討論結果、假設、驗證方式與分段工作項目。確認本文件前，不建立應用程式、資料庫或部署設定。
 
@@ -765,9 +765,11 @@ Aircraft provider ──► Observation collector ──► SQLite
 - 整理後 README、文件連結、測試與必要 script 均可正常使用，且可重現的驗證證據沒有遺失。
 - 所有 JavaScript 檔案均使用 `.js` 與 ESM `import`／`export`；本機測試、CLI 與 Docker 執行方式在遷移後維持正常。
 
-結果：已完成。第 1–31 項均已實作；第 16–31 項完成主列表資訊簡化、details 信心水準、provider 條款邊界、Flightradar24 通用查詢連結、原創 favicon、N／E 方位指示、單一可掛載 operator catalog、nullable IATA code 與公開來源 resolver。53 項測試、ESLint、JavaScript syntax check、Compose config、diff check、隔離 precise Docker image build／health／API／favicon 與 container audit 均通過；新 image 以唯讀方式查詢既有 volume 時正確將 `VJT` 視為已知 operator，並為未知 `ESR` 產生附來源且不自動寫入 catalog 的候選資料。33083 review container 曾放入 4 筆標記為 `ui-preview` 的 departure 與 precise 航跡複本供 UX review，未影響主服務，原 review DB 亦已備份。使用者於 2026-09-20 確認階段 8.5 結案；階段 9 尚未開始。
+結果：已完成。第 1–31 項均已實作；第 16–31 項完成主列表資訊簡化、details 信心水準、provider 條款邊界、Flightradar24 通用查詢連結、原創 favicon、N／E 方位指示、單一可掛載 operator catalog、nullable IATA code 與公開來源 resolver。53 項測試、ESLint、JavaScript syntax check、Compose config、diff check、隔離 precise Docker image build／health／API／favicon 與 container audit 均通過；新 image 以唯讀方式查詢既有 volume 時正確將 `VJT` 視為已知 operator，並為未知 `ESR` 產生附來源且不自動寫入 catalog 的候選資料。33083 review container 曾放入 4 筆標記為 `ui-preview` 的 departure 與 precise 航跡複本供 UX review，未影響主服務，原 review DB 亦已備份。使用者於 2026-09-20 確認階段 8.5 結案。
 
 ### （選配）階段 9：GitHub Pages 公開快照部署
+
+狀態：已完成。
 
 本階段不影響自架版本；自架服務維持較高更新頻率與選配的受保護 Telegram API，GitHub Pages 則提供低頻、可分享的公開靜態版本。
 
@@ -790,6 +792,36 @@ Aircraft provider ──► Observation collector ──► SQLite
 - host publisher 可安全地只在資料變更或 heartbeat 時更新 branch，失敗時不影響 collector 的持續運作。
 
 完整架構、設定與部署程序見 [GITHUB_PAGES_DEPLOYMENT_PLAN.md](plans/GITHUB_PAGES_DEPLOYMENT_PLAN.md)。
+
+結果：已完成。公開 snapshot schema、summary allowlist、相對路徑雙模式前端、opt-in container exporter、host publisher、operator catalog 複製、`pull --ff-only` 同步、變更偵測與操作文件均已加入；`worktree-pages` 中的 `gh-pages` worktree、首次 orphan 初始化、公開成品與相同輸出不重複 commit 均已驗證。`pages:sync` 可從執行中的 Docker service 安全備份 SQLite、產生 `data/status.json` 並驗證公開成品，且不執行 Git 寫入；`pages:sync-and-publish` 則提供具 `flock`、HTTPS remote、fine-grained PAT askpass、非互動失敗及發布後驗證的 cron 自動化流程。公開 snapshot 已以實際 container DB 驗證 schema version 1、summary-only allowlist、無 precise track，並能呈現今日統計、近期航班與共用 advice 結果。使用者於 2026-09-20 確認階段 9 結案；所有人工 Git commit／push 仍由使用者操作，只有明確啟用的 cron publisher 會依設定自動發布。
+
+階段 9 feedback（已完成）：統一 host 端的 Pages snapshot staging 路徑為 `runtime/pages/status.json`。`runtime/backup/` 只保留同步期間建立的 SQLite 備份，`public/` 只保留可發布的前端原始資產；`worktree-pages/data/status.json` 則是準備由 `gh-pages` branch 發布的複本。exporter、publisher、Docker bind mount、手動同步、cron 自動發布與操作文件均使用同一 staging 路徑，不再產生 `public/data/status.json`、`runtime/public/status.json` 或 `runtime/backup/status-from-container-db.json`。
+
+### 階段 10：文件整理與 Architecture Decision Records
+
+狀態：尚未開始。本階段只整理文件結構與內容，不改變 collector、detector、API、網頁或部署行為。
+
+目標：將 `PLANS.md`、部署規畫及其他同時混合背景、選項、決策與實作結果的工程文件，整理成可長期維護的 Architecture Decision Record（ADR）；同時提供中文與英文 README，並以中文作為 repository 預設入口。
+
+工作：
+
+- 盤點 `docs/PLANS.md`、`docs/plans/`、`docs/validation/` 與根目錄 README，區分目前有效的架構決策、歷史規畫、驗證證據、操作手冊及已過時內容；先建立搬移對照表，不直接刪除仍有追溯價值的資料。
+- 建立 `docs/adr/` 與 ADR index，採固定編號與檔名，例如 `0001-use-adsb-fi-as-default-provider.md`；每份 ADR 至少包含 status、date、context、decision、alternatives、consequences 與 references。
+- 將仍有效的關鍵決策拆成各自的 ADR，候選項目至少包含 provider 選擇與備援、起飛方向判定邊界、拍攝建議規則、公開 `summary`／私人 `precise` 邊界、operator catalog、SQLite／Docker 自架架構，以及 GitHub Pages 靜態 snapshot 發布方式。
+- `PLANS.md` 不再同時充當決策文件與逐步實作日誌；整理後保留精簡的階段狀態、未完成工作與 ADR／validation 索引。完整歷史若仍需保留，移至明確標示的 archive，而非混入目前規格。
+- `docs/validation/` 保留可重現的實測結果與證據，不將量測結果硬改寫成 ADR；ADR 只引用相關 validation 文件，避免複製後內容分歧。
+- 將根目錄 `README.md` 改為繁體中文的預設入口，新增 `README.en.md` 英文版；兩份 README 在頂部互相連結，並維持相同的功能、設定、部署、安全限制、operator 維護及 GitHub Pages 操作資訊。
+- 檢查並更新所有相對連結、檔案路徑、指令範例與文件引用；不得遺失 provider attribution、公開資料限制、PAT 安全原則、人工 Git 操作界線或歷史驗證證據。
+- 在開始搬移前先提出預計的 ADR 清單、文件樹及舊檔處置方式供使用者 review；確認後才實際搬移、拆分或歸檔文件。
+
+驗收：
+
+- repository 首頁預設顯示繁體中文 README，且可在首屏切換至完整英文版；英文版也可切回中文版。
+- `docs/adr/` 有 index、統一模板及連續編號；每項現行重大架構決策只有一個 authoritative ADR，並清楚標示 accepted、superseded 或 deprecated。
+- 精簡後的 `PLANS.md` 能清楚呈現階段狀態與未完成工作，但不再重複 ADR 的完整決策內容。
+- validation evidence、操作文件與 ADR 的角色清楚，文件間沒有失效連結、互相矛盾的現行設定或無法判斷哪份才是準則的重複內容。
+- 中英文 README 的指令與設定項目一致；抽查本機、Docker Compose、operator audit、snapshot sync 與 cron publish 流程均可依文件重現。
+- 文件整理完成後執行 Markdown／連結檢查、`npm test`、`npm run lint`、`docker compose config` 與 `git diff --check`；不執行 commit 或 push。
 
 ## 12. 測試策略
 

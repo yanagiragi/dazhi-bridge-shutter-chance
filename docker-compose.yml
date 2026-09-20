@@ -7,12 +7,15 @@ services:
       - "${PORT:-3000}:3000"
     environment:
       PORT: 3000
-      DATABASE_PATH: /data/dazhi.sqlite
-      OPERATOR_CATALOG_PATH: /config/operators.json
+      DATABASE_PATH: ${DATABASE_PATH:-/data/dazhi.sqlite}
+      OPERATOR_CATALOG_PATH: ${OPERATOR_CATALOG_PATH:-/data/operators.json}
       TZ: ${TZ:-Asia/Taipei}
       WEB_ENABLED: ${WEB_ENABLED:-true}
       API_ENABLED: ${API_ENABLED:-true}
       API_BEARER_TOKEN: ${API_BEARER_TOKEN:-}
+      STATIC_PUBLISH_ENABLED: ${STATIC_PUBLISH_ENABLED:-false}
+      STATIC_SNAPSHOT_PATH: ${STATIC_SNAPSHOT_PATH:-/export/status.json}
+      STATIC_PUBLISH_HEARTBEAT_MINUTES: ${STATIC_PUBLISH_HEARTBEAT_MINUTES:-30}
       DEPARTURE_DETAILS_MODE: ${DEPARTURE_DETAILS_MODE:-summary}
       AIRCRAFT_DATA_PROVIDER: ${AIRCRAFT_DATA_PROVIDER:-adsbfi}
       COLLECTOR_INTERVAL_MS: ${COLLECTOR_INTERVAL_MS:-30000}
@@ -32,6 +35,7 @@ services:
     volumes:
       - dazhi-data:/data
       - ./config/operators.json:/config/operators.json:ro
+      - ./runtime/pages:/export
     restart: unless-stopped
     stop_grace_period: 30s
     logging:

@@ -32,6 +32,11 @@ const DEPARTURE_DETAILS_MODE_SUMMARY = 'summary'
 const DEPARTURE_DETAILS_MODE_PRECISE = 'precise'
 const DEFAULT_DEPARTURE_DETAILS_MODE = DEPARTURE_DETAILS_MODE_SUMMARY
 
+// Static snapshot export is opt-in; output can be bind-mounted to a host publisher.
+const DEFAULT_STATIC_PUBLISH_ENABLED = false
+const DEFAULT_STATIC_SNAPSHOT_PATH = path.resolve('./runtime/pages/status.json')
+const DEFAULT_STATIC_PUBLISH_HEARTBEAT_MINUTES = 30
+
 // Bundled operator names are the local-development default. Deployments may
 // point this at a read-only mounted catalog to update names without rebuilding.
 const DEFAULT_OPERATOR_CATALOG_PATH = path.join(
@@ -121,6 +126,18 @@ function loadConfig (env = process.env) {
         timezone: env.TZ || 'Asia/Taipei',
         apiBearerToken: env.API_BEARER_TOKEN || null,
         webEnabled: booleanSetting(env.WEB_ENABLED, 'WEB_ENABLED', true),
+        staticPublishEnabled: booleanSetting(
+            env.STATIC_PUBLISH_ENABLED, 'STATIC_PUBLISH_ENABLED',
+            DEFAULT_STATIC_PUBLISH_ENABLED
+        ),
+        staticSnapshotPath: path.resolve(
+            env.STATIC_SNAPSHOT_PATH || DEFAULT_STATIC_SNAPSHOT_PATH
+        ),
+        staticPublishHeartbeatMinutes: positiveInteger(
+            env.STATIC_PUBLISH_HEARTBEAT_MINUTES ||
+                String(DEFAULT_STATIC_PUBLISH_HEARTBEAT_MINUTES),
+            'STATIC_PUBLISH_HEARTBEAT_MINUTES'
+        ),
         apiEnabled: booleanSetting(env.API_ENABLED, 'API_ENABLED', true),
         departureDetailsMode: departureDetailsMode(
             env.DEPARTURE_DETAILS_MODE
@@ -184,6 +201,9 @@ export {
     DEFAULT_COLLECTOR_ACTIVE_START,
     DEFAULT_COLLECTOR_ACTIVE_TIME_ZONE,
     DEFAULT_OPERATOR_CATALOG_PATH,
+    DEFAULT_STATIC_PUBLISH_ENABLED,
+    DEFAULT_STATIC_SNAPSHOT_PATH,
+    DEFAULT_STATIC_PUBLISH_HEARTBEAT_MINUTES,
     aircraftDataProvider,
     departureDetailsMode,
     loadConfig

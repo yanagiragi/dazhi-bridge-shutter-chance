@@ -216,3 +216,47 @@ docker compose config
 ## Web dashboard
 
 Open `http://127.0.0.1:3000/` for the mobile-first dashboard. The interface supports Traditional Chinese and English; use the language button in the header. It reads the same `/api/v1/status` result as the Telegram integration.
+
+## GitHub Pages snapshot
+
+The Pages deployment is a static snapshot and does not expose the private HTTP API. Enable snapshot export only when a host publisher is configured:
+
+```sh
+STATIC_PUBLISH_ENABLED=true
+STATIC_SNAPSHOT_PATH=/export/status.json
+STATIC_PUBLISH_HEARTBEAT_MINUTES=30
+docker compose up -d --build
+docker compose exec app npm run pages:snapshot
+```
+
+The collector writes only the summary projection to the bind-mounted `runtime/pages/status.json`. It never receives a GitHub credential. Create a gh-pages worktree on the host, then run:
+
+```sh
+PAGES_WORKTREE_PATH=./worktree-pages npm run pages:setup
+PAGES_WORKTREE_PATH=./worktree-pages \
+STATIC_SNAPSHOT_PATH=./runtime/pages/status.json \
+PAGES_PUSH=true npm run publish:pages
+PAGES_WORKTREE_PATH=./worktree-pages npm run pages:verify
+```
+
+The publisher validates the schema, copies the frontend and operator catalog, writes snapshot web-config.json, and commits only when output changes. It uses git pull --ff-only and never force-pushes. Configure GitHub Pages to deploy the gh-pages branch root at the repository URL. If GitHub is unavailable, SQLite collection continues and a later publish can retry.
+
+Pages always publishes summary; exact track coordinates remain private. The snapshot contains only today departures observed no later than its generation time, advice, active-window status, and minimal departure evidence.
+
+### Automated Pages sync and push
+
+For unattended publishing, use `pages:sync-and-publish`. It acquires a host lock, requires an HTTPS GitHub remote, runs the database backup and snapshot verification, then commits and pushes only through the existing publisher. It never puts a PAT in the command line or repository. Configure `PAGES_ASKPASS_PATH` to a root-readable-only Git askpass helper that reads the PAT from a separate `0600` file.
+
+The current repository remote is SSH. Change it once yourself if PAT authentication is desired:
+
+```sh
+git remote set-url origin https://github.com/yanagiragi/dazhi-bridge-shutter-chance.git
+```
+
+Example cron entry (every 30 minutes):
+
+```cron
+*/30 * * * * PAGES_ASKPASS_PATH=/home/rayark/bin/github-pages-askpass /home/rayark/Projects/dazhi-bridge-shutter-chance/scripts/sync-and-publish-pages.sh >> /home/rayark/Projects/dazhi-bridge-shutter-chance/runtime/pages-cron.log 2>&1
+```
+
+`PAGES_LOCK_FILE` can override the lock location. Set the askpass helper and PAT file permissions so only the service user can read them. `GIT_TERMINAL_PROMPT=0` makes missing credentials fail promptly instead of hanging cron. If GitHub is unavailable, the SQLite backup and local snapshot remain available and the next scheduled run can retry.

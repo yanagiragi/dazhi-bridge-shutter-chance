@@ -1,6 +1,6 @@
 # GitHub Pages 無 API 部署規畫
 
-> 狀態：已排入 [`PLANS.md`](../PLANS.md) 的選配階段 9；尚未開始實作。
+> 狀態：核心實作與本機 gh-pages worktree 已完成；首次遠端 Pages 發布仍需部署者設定 fine-grained PAT、branch 與 Pages source。
 
 ## 1. 結論
 
@@ -256,6 +256,8 @@ Pages 不是完整即時備援。家中 collector 停止時，Pages 仍可載入
 - 在家中主機建立 `gh-pages` branch 及獨立 host worktree。
 - 實作前端成品同步，但只在前端版本變更時執行。
 - 實作 snapshot change detection、heartbeat、validation、commit、push 與失敗重試。
+- 提供 `pages:verify`，在發布前後驗證 branch 內容只含公開靜態成品。
+- 提供 opt-in `pages:sync-and-publish` cron wrapper，使用 host lock、HTTPS remote、askpass PAT 與非互動 credential failure；人工 `pages:sync` 仍只更新 snapshot。
 - publisher 使用 `pull --ff-only`，並禁止 force push。
 - 使用 bind mount 接收 exporter 輸出；GitHub credential 不提供給 container。
 - 設定限定 repository 的 fine-grained PAT、到期日與輪替提醒。
@@ -305,4 +307,4 @@ Pages 不是完整即時備援。家中 collector 停止時，Pages 仍可載入
 - 階段 7.5 已確認資料來源、公開欄位 allowlist 與必要 attribution。
 - 已填入 heartbeat 與 PAT 輪替設定。
 
-階段 9 尚未開始；在開始前，不建立 `gh-pages` branch、worktree 或 publisher。
+核心 exporter、雙模式前端、host publisher 與操作文件已完成；本機 `worktree-pages` 已建立並驗證，首次遠端 push 與 PAT 設定由部署者依第 9 節執行。

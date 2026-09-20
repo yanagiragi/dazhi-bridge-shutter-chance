@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import http from 'node:http'
 import {
@@ -23,6 +23,7 @@ import {
 } from './scheduler.js'
 import { buildAdvice, localDateKey } from './advice.js'
 import { loadOperatorCatalog } from './operator-catalog.js'
+import { buildPublicSnapshot, validatePublicSnapshot } from './snapshot.js'
 
 // HTTP status codes returned by the JSON API.
 const HTTP_OK = 200
@@ -350,6 +351,30 @@ function structuredLog (event, details = {}) {
     }))
 }
 
+function writeStaticSnapshot ({ database, config, now = new Date() }) {
+    const serviceSnapshot = querySnapshot(
+        database,
+        now,
+        config.timezone,
+        DEFAULT_DEPARTURE_QUERY_LIMIT,
+        'summary',
+        {
+            timezone: config.collectorActiveTimeZone,
+            start: config.collectorActiveStart,
+            end: config.collectorActiveEnd
+        }
+    )
+    const snapshot = validatePublicSnapshot(buildPublicSnapshot({
+        serviceSnapshot,
+        generatedAt: now.toISOString(),
+        provider: config.aircraftDataProvider
+    }))
+    mkdirSync(dirname(config.staticSnapshotPath), { recursive: true })
+    const serialized = JSON.stringify(snapshot, null, 2) + '\n'
+    writeFileSync(config.staticSnapshotPath, serialized)
+    return snapshot
+}
+
 function createCollectionTask ({
     collector,
     config,
@@ -417,6 +442,21 @@ function start (config = loadConfig()) {
         intervalMs: config.collectorIntervalMs,
         task: collectionTask
     })
+    let staticSnapshotTimer = null
+    if (config.staticPublishEnabled) {
+        const publishSnapshot = () => {
+            try {
+                writeStaticSnapshot({ database: opened.database, config })
+            } catch (error) {
+                structuredLog('snapshot-export-error', { message: error.message })
+            }
+        }
+        publishSnapshot()
+        staticSnapshotTimer = setInterval(
+            publishSnapshot,
+            config.staticPublishHeartbeatMinutes * 60 * 1000
+        )
+    }
     let shuttingDown = false
 
     server.on('error', error => {
@@ -442,6 +482,7 @@ function start (config = loadConfig()) {
         shuttingDown = true
         structuredLog('shutdown-started', { signal })
         await scheduler.stop()
+        if (staticSnapshotTimer) clearInterval(staticSnapshotTimer)
         await new Promise((resolve, reject) => {
             server.close(error => error ? reject(error) : resolve())
         })
@@ -477,5 +518,6 @@ export {
     parseLimit,
     querySnapshot,
     createCollector,
-    collectionParams
+    collectionParams,
+    writeStaticSnapshot
 }

@@ -271,7 +271,7 @@ test('dashboard serves the localized web shell', async t => {
     assert.match(html, /id="adsb-fi-attribution" hidden/)
     assert.match(html, /id="theme"/)
     assert.match(html, /id="collection-status"/)
-    assert.match(html, /rel="icon" href="\/favicon\.svg"/)
+    assert.match(html, /rel="icon" href="\.\/favicon\.svg"/)
     assert.doesNotMatch(html, /data-i18n="live"/)
 
     const assetBaseUrl = 'http://127.0.0.1:' + server.address().port

@@ -9,6 +9,12 @@
         "node": ">=22"
     },
     "scripts": {
+        "pages:snapshot": "node scripts/export-snapshot.js",
+        "pages:publish": "node scripts/publish-pages.js",
+        "pages:setup": "node scripts/setup-pages-worktree.js",
+        "pages:verify": "node scripts/verify-pages.js",
+        "pages:sync": "bash scripts/sync-pages-snapshot.sh",
+        "pages:sync-and-publish": "bash scripts/sync-and-publish-pages.sh",
         "start": "node src/server.js",
         "migrate": "node src/migrate.js",
         "backup": "node src/backup.js",

@@ -13,6 +13,8 @@ COPY src ./src
 COPY public ./public
 COPY config ./config
 COPY scripts/audit-callsigns.js ./scripts/audit-callsigns.js
+COPY scripts/export-snapshot.js ./scripts/export-snapshot.js
+COPY scripts/setup-pages-worktree.js ./scripts/setup-pages-worktree.js
 
 FROM node:24-bookworm-slim
 
