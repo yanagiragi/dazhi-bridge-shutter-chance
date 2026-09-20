@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-20T07:11:05.815Z",
-  "collectorLastSuccessAt": "2026-09-20T07:10:56.369Z",
+  "generatedAt": "2026-09-20T07:13:09.719Z",
+  "collectorLastSuccessAt": "2026-09-20T07:12:56.386Z",
   "collectorStatus": "active",
   "activeWindow": {
     "start": "06:30",
@@ -17,7 +17,7 @@
     "recommendation": "low-opportunity",
     "confidence": "low",
     "reason": "The latest departure was not westbound or there is only one directional sample",
-    "lastSuccessAt": "2026-09-20T07:10:56.369Z",
+    "lastSuccessAt": "2026-09-20T07:12:56.386Z",
     "collectionSchedule": {
       "timezone": "Asia/Taipei",
       "start": "06:30",
@@ -26,12 +26,32 @@
       "nextStartAt": null
     },
     "today": {
-      "total": 46,
-      "eastbound": 41,
+      "total": 47,
+      "eastbound": 42,
       "westbound": 5,
       "unknown": 0
     },
     "recentDepartures": [
+      {
+        "callsign": "EVA772",
+        "detected_at": "2026-09-20T07:10:56.369Z",
+        "direction": "eastbound",
+        "runway_estimate": "10",
+        "detection_confidence": "medium",
+        "source": "adsbfi",
+        "details": {
+          "observed_from": "2026-09-20T07:10:56.369Z",
+          "observed_to": "2026-09-20T07:11:26.372Z",
+          "samples": 2,
+          "direction_samples": 2,
+          "initial_altitude": 571.5,
+          "maximum_altitude": 891.5400000000001,
+          "altitude_gain": 320.0400000000001,
+          "median_vertical_rate": 10.322560000000001,
+          "longitude_delta": 0.026127000000002454,
+          "movement": "climbing"
+        }
+      },
       {
         "callsign": "MDA1273",
         "detected_at": "2026-09-20T06:54:26.130Z",
@@ -211,36 +231,36 @@
           "longitude_delta": 0.05076099999999428,
           "movement": "climbing"
         }
-      },
-      {
-        "callsign": "TWB668",
-        "detected_at": "2026-09-20T06:04:55.084Z",
-        "direction": "eastbound",
-        "runway_estimate": "10",
-        "detection_confidence": "high",
-        "source": "adsbfi",
-        "details": {
-          "observed_from": "2026-09-20T06:04:55.084Z",
-          "observed_to": "2026-09-20T06:05:55.107Z",
-          "samples": 3,
-          "direction_samples": 3,
-          "initial_altitude": 640.08,
-          "maximum_altitude": 1333.5,
-          "altitude_gain": 693.42,
-          "median_vertical_rate": 13.980160000000001,
-          "longitude_delta": 0.054044000000004644,
-          "movement": "climbing"
-        }
       }
     ]
   },
   "today": {
-    "total": 46,
-    "eastbound": 41,
+    "total": 47,
+    "eastbound": 42,
     "westbound": 5,
     "unknown": 0
   },
   "recentDepartures": [
+    {
+      "callsign": "EVA772",
+      "detected_at": "2026-09-20T07:10:56.369Z",
+      "direction": "eastbound",
+      "runway_estimate": "10",
+      "detection_confidence": "medium",
+      "source": "adsbfi",
+      "details": {
+        "observed_from": "2026-09-20T07:10:56.369Z",
+        "observed_to": "2026-09-20T07:11:26.372Z",
+        "samples": 2,
+        "direction_samples": 2,
+        "initial_altitude": 571.5,
+        "maximum_altitude": 891.5400000000001,
+        "altitude_gain": 320.0400000000001,
+        "median_vertical_rate": 10.322560000000001,
+        "longitude_delta": 0.026127000000002454,
+        "movement": "climbing"
+      }
+    },
     {
       "callsign": "MDA1273",
       "detected_at": "2026-09-20T06:54:26.130Z",
@@ -418,26 +438,6 @@
         "altitude_gain": 556.26,
         "median_vertical_rate": 10.07872,
         "longitude_delta": 0.05076099999999428,
-        "movement": "climbing"
-      }
-    },
-    {
-      "callsign": "TWB668",
-      "detected_at": "2026-09-20T06:04:55.084Z",
-      "direction": "eastbound",
-      "runway_estimate": "10",
-      "detection_confidence": "high",
-      "source": "adsbfi",
-      "details": {
-        "observed_from": "2026-09-20T06:04:55.084Z",
-        "observed_to": "2026-09-20T06:05:55.107Z",
-        "samples": 3,
-        "direction_samples": 3,
-        "initial_altitude": 640.08,
-        "maximum_altitude": 1333.5,
-        "altitude_gain": 693.42,
-        "median_vertical_rate": 13.980160000000001,
-        "longitude_delta": 0.054044000000004644,
         "movement": "climbing"
       }
     }
