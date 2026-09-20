@@ -64,8 +64,10 @@ For cataloged airlines, the operator's verified IATA code converts the ADS-B
 callsign to a Flightradar24 flight-history URL. For example, `EVA192` becomes
 `https://www.flightradar24.com/data/flights/br192`. A cataloged operator without
 an assigned IATA code falls back to its ICAO callsign, so `VJT719` becomes
-`https://www.flightradar24.com/data/flights/vjt719`. The service does not guess
-an IATA code for unknown operators or a flight-instance URL.
+`https://www.flightradar24.com/data/flights/vjt719`. If a valid alphanumeric
+callsign cannot produce a flight-history URL, it falls back to the callsign page;
+for example, `B31988` becomes `https://www.flightradar24.com/B31988`. Numeric-only
+identifiers remain without a link.
 
 ### Maintaining operator names
 
