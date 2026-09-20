@@ -1,29 +1,29 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-20T13:00:02.389Z",
+  "generatedAt": "2026-09-20T13:30:03.123Z",
   "collectorLastSuccessAt": "2026-09-20T12:59:32.035Z",
-  "collectorStatus": "active",
+  "collectorStatus": "outside_schedule",
   "activeWindow": {
     "start": "06:30",
     "end": "21:00",
     "timeZone": "Asia/Taipei"
   },
-  "nextCollectionAt": null,
+  "nextCollectionAt": "2026-09-20T22:30:00.000Z",
   "provider": "adsbfi",
   "advice": {
     "date": "2026-09-20",
     "timezone": "Asia/Taipei",
-    "freshness": "fresh",
-    "recommendation": "low-opportunity",
-    "confidence": "low",
-    "reason": "The latest departure was not westbound or there is only one directional sample",
+    "freshness": "outside_schedule",
+    "recommendation": "insufficient-data",
+    "confidence": "insufficient",
+    "reason": "The collector is not fresh or has no departure data today",
     "lastSuccessAt": "2026-09-20T12:59:32.035Z",
     "collectionSchedule": {
       "timezone": "Asia/Taipei",
       "start": "06:30",
       "end": "21:00",
       "date": "2026-09-20",
-      "nextStartAt": null
+      "nextStartAt": "2026-09-20T22:30:00.000Z"
     },
     "today": {
       "total": 73,
