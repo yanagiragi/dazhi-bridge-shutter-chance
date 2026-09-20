@@ -1,24 +1,21 @@
 <!doctype html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dazhi Bridge Flight Watch</title>
+    <title>Dazhi Bridge Shutter Chance</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="./styles.css">
     <script defer src="./app.js"></script>
 </head>
+
 <body>
     <main class="shell">
         <header class="topbar">
             <div>
-                <h1 data-i18n="title">Dazhi Bridge Flight Watch</h1>
-                <div
-                    id="collection-status"
-                    class="collection-status"
-                    data-state="waiting"
-                    aria-live="polite"
-                >
+                <h1 data-i18n="title">Dazhi Bridge Shutter Chance</h1>
+                <div id="collection-status" class="collection-status" data-state="waiting" aria-live="polite">
                     <span class="status-dot" aria-hidden="true"></span>
                     <div>
                         <p id="collection-status-title">--</p>
@@ -27,30 +24,16 @@
                 </div>
             </div>
             <div class="header-actions">
-                <button
-                    id="theme"
-                    class="header-button"
-                    type="button"
-                    aria-label="Switch to dark mode"
-                >
+                <button id="theme" class="header-button" type="button" aria-label="Switch to dark mode">
                     Dark
                 </button>
-                <button
-                    id="language"
-                    class="header-button"
-                    type="button"
-                    aria-label="Switch language"
-                >
+                <button id="language" class="header-button" type="button" aria-label="Switch language">
                     EN
                 </button>
             </div>
         </header>
 
-        <section
-            id="recommendation"
-            class="recommendation"
-            aria-live="polite"
-        >
+        <section id="recommendation" class="recommendation" aria-live="polite">
             <div>
                 <p class="eyebrow" data-i18n="recommendation">
                     Recommendation
@@ -97,4 +80,5 @@
         </footer>
     </main>
 </body>
+
 </html>

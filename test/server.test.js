@@ -125,7 +125,7 @@ test('status API returns advice and collector state', async t => {
 
     const configResponse = await fetch(
         'http://127.0.0.1:' + server.address().port +
-            '/web-config.json'
+        '/web-config.json'
     )
     assert.deepEqual(await configResponse.json(), {
         aircraftDataProvider: 'opensky',
@@ -292,7 +292,7 @@ test('dashboard serves the localized web shell', async t => {
     )
     assert.equal(response.status, 200)
     const html = await response.text()
-    assert.match(html, /Dazhi Bridge Flight Watch/)
+    assert.match(html, /Dazhi Bridge Shutter Chance/)
     assert.match(html, /id="adsb-fi-attribution" hidden/)
     assert.match(html, /id="theme"/)
     assert.match(html, /id="collection-status"/)
@@ -360,7 +360,7 @@ test('dashboard serves the localized web shell', async t => {
 
     const configResponse = await fetch(
         'http://127.0.0.1:' + server.address().port +
-            '/web-config.json'
+        '/web-config.json'
     )
     assert.deepEqual(await configResponse.json(), {
         aircraftDataProvider: 'adsbfi',
