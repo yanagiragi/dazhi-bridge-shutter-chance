@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-21T12:30:02.639Z",
-  "collectorLastSuccessAt": "2026-09-21T12:29:51.656Z",
+  "generatedAt": "2026-09-21T13:00:02.483Z",
+  "collectorLastSuccessAt": "2026-09-21T12:59:52.266Z",
   "collectorStatus": "active",
   "activeWindow": {
     "start": "06:30",
@@ -17,7 +17,7 @@
     "recommendation": "low-opportunity",
     "confidence": "low",
     "reason": "The latest departure was not westbound or there is only one directional sample",
-    "lastSuccessAt": "2026-09-21T12:29:51.656Z",
+    "lastSuccessAt": "2026-09-21T12:59:52.266Z",
     "collectionSchedule": {
       "timezone": "Asia/Taipei",
       "start": "06:30",
@@ -26,12 +26,32 @@
       "nextStartAt": null
     },
     "today": {
-      "total": 74,
-      "eastbound": 74,
+      "total": 75,
+      "eastbound": 75,
       "westbound": 0,
       "unknown": 0
     },
     "recentDepartures": [
+      {
+        "callsign": "MDA1276",
+        "detected_at": "2026-09-21T12:58:52.230Z",
+        "direction": "eastbound",
+        "runway_estimate": "10",
+        "detection_confidence": "medium",
+        "source": "adsbfi",
+        "details": {
+          "observed_from": "2026-09-21T12:58:52.230Z",
+          "observed_to": "2026-09-21T12:59:22.250Z",
+          "samples": 2,
+          "direction_samples": 2,
+          "initial_altitude": 853.44,
+          "maximum_altitude": 1295.4,
+          "altitude_gain": 441.96000000000004,
+          "median_vertical_rate": 11.866880000000002,
+          "longitude_delta": 0.027397000000007665,
+          "movement": "climbing"
+        }
+      },
       {
         "callsign": "CXA884",
         "detected_at": "2026-09-21T12:26:51.648Z",
@@ -211,36 +231,36 @@
           "longitude_delta": 0.05040400000000034,
           "movement": "climbing"
         }
-      },
-      {
-        "callsign": "MDA1275",
-        "detected_at": "2026-09-21T10:17:19.948Z",
-        "direction": "eastbound",
-        "runway_estimate": "10",
-        "detection_confidence": "high",
-        "source": "adsbfi",
-        "details": {
-          "observed_from": "2026-09-21T10:17:19.948Z",
-          "observed_to": "2026-09-21T10:18:19.962Z",
-          "samples": 3,
-          "direction_samples": 3,
-          "initial_altitude": 304.8,
-          "maximum_altitude": 1112.52,
-          "altitude_gain": 807.72,
-          "median_vertical_rate": 11.3792,
-          "longitude_delta": 0.05358499999999822,
-          "movement": "climbing"
-        }
       }
     ]
   },
   "today": {
-    "total": 74,
-    "eastbound": 74,
+    "total": 75,
+    "eastbound": 75,
     "westbound": 0,
     "unknown": 0
   },
   "recentDepartures": [
+    {
+      "callsign": "MDA1276",
+      "detected_at": "2026-09-21T12:58:52.230Z",
+      "direction": "eastbound",
+      "runway_estimate": "10",
+      "detection_confidence": "medium",
+      "source": "adsbfi",
+      "details": {
+        "observed_from": "2026-09-21T12:58:52.230Z",
+        "observed_to": "2026-09-21T12:59:22.250Z",
+        "samples": 2,
+        "direction_samples": 2,
+        "initial_altitude": 853.44,
+        "maximum_altitude": 1295.4,
+        "altitude_gain": 441.96000000000004,
+        "median_vertical_rate": 11.866880000000002,
+        "longitude_delta": 0.027397000000007665,
+        "movement": "climbing"
+      }
+    },
     {
       "callsign": "CXA884",
       "detected_at": "2026-09-21T12:26:51.648Z",
@@ -418,26 +438,6 @@
         "altitude_gain": 685.8,
         "median_vertical_rate": 12.029440000000001,
         "longitude_delta": 0.05040400000000034,
-        "movement": "climbing"
-      }
-    },
-    {
-      "callsign": "MDA1275",
-      "detected_at": "2026-09-21T10:17:19.948Z",
-      "direction": "eastbound",
-      "runway_estimate": "10",
-      "detection_confidence": "high",
-      "source": "adsbfi",
-      "details": {
-        "observed_from": "2026-09-21T10:17:19.948Z",
-        "observed_to": "2026-09-21T10:18:19.962Z",
-        "samples": 3,
-        "direction_samples": 3,
-        "initial_altitude": 304.8,
-        "maximum_altitude": 1112.52,
-        "altitude_gain": 807.72,
-        "median_vertical_rate": 11.3792,
-        "longitude_delta": 0.05358499999999822,
         "movement": "climbing"
       }
     }
