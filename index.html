@@ -79,6 +79,41 @@
             </div>
         </section>
 
+        <section class="card history-card">
+            <div class="card-heading">
+                <h2 data-i18n="history.title">Historical statistics</h2>
+                <div class="segmented-control" data-i18n-aria-label="history.rangeLabel" aria-label="Statistics period">
+                    <button type="button" data-statistics-range="7" data-i18n="history.range7">7 days</button>
+                    <button type="button" data-statistics-range="30" data-i18n="history.range30">30 days</button>
+                    <button type="button" data-statistics-range="all" data-i18n="history.rangeAll">All</button>
+                </div>
+            </div>
+            <div class="history-summary">
+                <div>
+                    <span data-i18n="history.westboundShare">Westbound share</span>
+                    <strong id="history-westbound-share">--</strong>
+                </div>
+                <div>
+                    <span data-i18n="history.opportunityDays">Opportunity days</span>
+                    <strong id="history-opportunity-days">--</strong>
+                </div>
+            </div>
+            <p id="history-period" class="muted history-period">--</p>
+            <div class="segmented-control history-view" data-i18n-aria-label="history.viewLabel"
+                aria-label="Statistics view">
+                <button type="button" data-statistics-view="daily" data-i18n="history.daily">Daily</button>
+                <button type="button" data-statistics-view="hourly" data-i18n="history.hourly">Time of day</button>
+            </div>
+            <div class="history-legend">
+                <span><i class="westbound"></i><span data-i18n="westbound">Westbound</span></span>
+                <span><i class="eastbound"></i><span data-i18n="eastbound">Eastbound</span></span>
+                <span><i class="unknown"></i><span data-i18n="unknown">Unknown</span></span>
+            </div>
+            <div id="history-chart" class="history-chart">
+                <p class="muted" data-i18n="loading">Loading...</p>
+            </div>
+        </section>
+
         <footer>
             <span id="adsb-fi-attribution" hidden>
                 <span data-i18n="source">Source</span>:
