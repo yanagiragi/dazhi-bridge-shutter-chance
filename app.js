@@ -753,12 +753,25 @@
         favicon.href = FAVICON_PATHS[mode] || FAVICON_PATHS.summary
     }
 
+    function applyGithubStar (config) {
+        const button = element('github-star')
+        if (!button) return
+        button.hidden = config?.dataSource !== 'snapshot'
+    }
+
+    function dashboardStatusUrl () {
+        const at = new URLSearchParams(window.location.search).get('at')
+        if (!at) return DASHBOARD_STATUS_URL
+        return DASHBOARD_STATUS_URL + '?at=' + encodeURIComponent(at)
+    }
+
     async function loadWebConfig () {
         const response = await fetch(WEB_CONFIG_URL)
         if (!response.ok) throw new Error('Unable to load web configuration')
 
         const config = await response.json()
         applyFavicon(config)
+        applyGithubStar(config)
         element('adsb-fi-attribution').hidden =
             config.aircraftDataProvider !== ADSB_FI_PROVIDER
         return config
@@ -780,7 +793,7 @@
         try {
             const endpoint = dataSource === 'snapshot'
                 ? SNAPSHOT_STATUS_URL
-                : DASHBOARD_STATUS_URL
+                : dashboardStatusUrl()
             const response = await fetch(endpoint, { cache: 'no-store' })
             if (!response.ok) throw new Error('Request failed')
             const payload = await response.json()
