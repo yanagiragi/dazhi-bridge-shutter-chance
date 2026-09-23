@@ -62,7 +62,7 @@ function publishPages ({
 
     const status = git(worktree, ['status', '--short'])
     if (!status) return { changed: false, snapshot }
-    git(worktree, ['add', '-A'])
+    git(worktree, ['add', 'operators.json', 'data/status.json', 'web-config.json'])
     git(worktree, ['commit', '-m', commitMessage])
     if (push) git(worktree, ['push', 'origin', 'gh-pages'])
     return { changed: true, snapshot }
