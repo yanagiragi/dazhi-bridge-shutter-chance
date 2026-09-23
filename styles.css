@@ -204,13 +204,18 @@ footer {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    padding: 8px;
     text-decoration: none;
 }
+.github-star[hidden] {
+    display: none;
+}
+
 
 .github-star svg {
     display: block;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
 }
 
 .recommendation,
