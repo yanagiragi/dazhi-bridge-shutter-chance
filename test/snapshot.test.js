@@ -16,7 +16,15 @@ test('public snapshot keeps only allowlisted summary fields', () => {
                 collectionSchedule: { timezone: 'Asia/Taipei', start: '06:30', end: '21:00', nextStartAt: null },
                 recentDepartures: [{ callsign: 'CAL123', detected_at: '2026-09-20T03:58:00.000Z', direction: 'eastbound', runway_estimate: '10', detection_confidence: 'high', source: 'adsbfi', details: { track: [{ latitude: 1 }] } }]
             },
-            collector: { state: 'ok' }
+            collector: { state: 'ok' },
+            statistics: {
+                timezone: 'Asia/Taipei',
+                ranges: {
+                    '30': { totals: { westbound: 1 } },
+                    '90': { totals: { westbound: 1 } },
+                    all: { totals: { westbound: 1 } }
+                }
+            }
         }
     })
     validatePublicSnapshot(snapshot)
@@ -24,6 +32,7 @@ test('public snapshot keeps only allowlisted summary fields', () => {
     assert.equal(snapshot.recentDepartures[0].details.track, undefined)
     assert.equal(snapshot.advice.recentDepartures[0].details.altitude_gain, null)
     assert.equal(snapshot.provider, 'adsbfi')
+    assert.equal(snapshot.statistics.ranges.all.totals.westbound, 1)
 })
 
 test('public snapshot validator rejects private fields', () => {

@@ -12,7 +12,7 @@ test('database initialization applies migrations and enables WAL', t => {
     t.after(() => rmSync(directory, { recursive: true, force: true }))
 
     const first = openDatabase(filename)
-    assert.equal(first.schemaVersion, 3)
+    assert.equal(first.schemaVersion, 4)
     assert.equal(first.database.pragma('journal_mode', { simple: true }), 'wal')
     const migration = first.database.prepare(
         'SELECT version, name FROM schema_migrations'
@@ -34,12 +34,12 @@ test('database initialization applies migrations and enables WAL', t => {
     first.database.close()
 
     const second = openDatabase(filename)
-    assert.equal(second.schemaVersion, 3)
+    assert.equal(second.schemaVersion, 4)
     assert.equal(
         second.database.prepare(
             'SELECT COUNT(*) AS count FROM schema_migrations'
         ).get().count,
-        3
+        4
     )
     second.database.close()
 })

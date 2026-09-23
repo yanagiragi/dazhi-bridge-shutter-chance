@@ -92,6 +92,31 @@ const MIGRATIONS = Object.freeze([
             CREATE INDEX idx_departure_track_points_observed_at
                 ON departure_track_points (observed_at);
         `
+    },
+    {
+        version: 4,
+        name: 'collector_request_history',
+        sql: `
+            CREATE TABLE collector_request_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                requested_at TEXT NOT NULL,
+                completed_at TEXT NOT NULL,
+                source TEXT NOT NULL,
+                state TEXT NOT NULL CHECK (state IN ('ok', 'error')),
+                aircraft_count INTEGER,
+                stored_departures INTEGER,
+                http_status INTEGER,
+                remaining_credits INTEGER,
+                error TEXT,
+                archive_path TEXT
+            );
+
+            CREATE INDEX idx_collector_request_history_completed_at
+                ON collector_request_history (completed_at);
+
+            CREATE INDEX idx_collector_request_history_source_time
+                ON collector_request_history (source, completed_at);
+        `
     }
 ])
 

@@ -36,7 +36,7 @@ Configuration is supplied through environment variables:
 - `COLLECTOR_ACTIVE_TIME_ZONE`: active-window timezone, default `Asia/Taipei`
 - `COLLECTOR_ACTIVE_START`: inclusive local start time, default `06:30`
 - `COLLECTOR_ACTIVE_END`: exclusive local end time, default `21:00`
-- `OBSERVATION_RETENTION_DAYS`: local raw-observation retention, default `7`
+- `PROVIDER_ARCHIVE_PATH`: compressed raw provider responses; defaults beside the SQLite database (`/data/provider-archive` in Compose)
 - `DEPARTURE_DETAILS_MODE`: `summary` (public-safe default) or `precise` (private deployments only)
 - `OPERATOR_CATALOG_PATH`: operator-name catalog, default `./config/operators.json` locally and `/config/operators.json` in Compose
 - `OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET`: optional OpenSky OAuth credentials; used only with `opensky`
@@ -47,6 +47,19 @@ By default, the collector uses adsb.fi. Its
 altitude, speed, and climb-rate values are converted from feet, knots, and
 feet per minute to the project’s metre and metre-per-second data model. Set
 `AIRCRAFT_DATA_PROVIDER=opensky` to switch providers manually.
+
+Normalized aircraft observations and one `collector_request_history` row per
+provider request attempt are retained permanently in SQLite. Successful adsb.fi
+responses are also appended verbatim to hourly gzip-compressed JSON Lines files
+under `PROVIDER_ARCHIVE_PATH`, partitioned by provider and local date. These raw
+archives are private runtime data and are never included in the public snapshot.
+The archive preserves provider-specific fields such as reported wind direction
+and speed for future analysis, while the normalized observations remain directly
+queryable by the detector and statistics service.
+
+`npm run backup` backs up SQLite only. A complete long-term backup must also copy
+`PROVIDER_ARCHIVE_PATH`. Docker Compose stores both the database and archive in
+the `dazhi-data` volume by default.
 
 The adsb.fi Open Data terms permit personal, non-commercial API use, prohibit
 licensing or selling the data or service, and require attribution with a link to

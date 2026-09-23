@@ -65,6 +65,7 @@ class AdsbFiClient {
 
         return {
             aircraft: payload.ac.map(normalizeAdsbFiAircraft),
+            rawResponse: payload,
             remainingCredits: null
         }
     }

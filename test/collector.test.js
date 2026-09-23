@@ -121,6 +121,8 @@ test('adsb.fi client queries a point and converts imperial values', async () => 
         verticalRate: null,
         onGround: 1
     })
+    assert.equal(result.rawResponse.ac.length, 2)
+    assert.equal(result.rawResponse.ac[0].flight, ' TEST123 ')
 })
 
 test('collector retries 429 and records canonical observations', async () => {
@@ -175,10 +177,19 @@ test('collector retries 429 and records canonical observations', async () => {
         ).get().remaining_credits,
         9
     )
+    const history = database.prepare(`
+        SELECT state, http_status
+        FROM collector_request_history
+        ORDER BY id
+    `).all()
+    assert.deepEqual(history, [
+        { state: 'error', http_status: 429 },
+        { state: 'ok', http_status: 200 }
+    ])
     database.close()
 })
 
-test('collector detects departures, deduplicates reprocessing, and removes old observations', async () => {
+test('collector detects departures and retains old observations', async () => {
     const database = new Database(':memory:')
     applyMigrations(database)
     database.prepare(
@@ -218,13 +229,17 @@ test('collector detects departures, deduplicates reprocessing, and removes old o
         logger: () => {}
     })
 
-    const first = await collector.runOnce()
+    await collector.runOnce()
     currentTime = new Date('2026-09-16T04:00:30.000Z')
     const second = await collector.runOnce()
     currentTime = new Date('2026-09-16T04:01:00.000Z')
     const third = await collector.runOnce()
 
-    assert.equal(first.deletedObservations, 1)
+    assert.equal(
+        database.prepare('SELECT COUNT(*) AS count FROM aircraft_observations WHERE icao24 = ?')
+            .get('old001').count,
+        1
+    )
     assert.equal(second.storedDepartures, 1)
     assert.equal(third.storedDepartures, 0)
     assert.equal(
@@ -298,7 +313,8 @@ test('configuration selects provider-specific query geometry', () => {
     assert.equal(defaultConfig.collectorActiveTimeZone, 'Asia/Taipei')
     assert.equal(defaultConfig.collectorActiveStart, '06:30')
     assert.equal(defaultConfig.collectorActiveEnd, '21:00')
-    assert.equal(defaultConfig.observationRetentionDays, 7)
+    assert.match(defaultConfig.providerArchivePath,
+        /data\/provider-archive$/)
     assert.equal(defaultConfig.departureDetailsMode, 'summary')
     assert.match(defaultConfig.operatorCatalogPath, /config\/operators\.json$/)
     assert.equal(

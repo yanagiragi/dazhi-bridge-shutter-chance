@@ -1,9 +1,9 @@
+import { setTimeout as delay } from 'node:timers/promises'
+
 import { detectDepartures, storeDepartures } from './detector.js'
 
-// Time windows bound departure processing and raw-observation retention.
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
+// Recent observations are reprocessed to detect a newly completed departure.
 const DEPARTURE_LOOKBACK_MS = 15 * 60 * 1000
-const DEFAULT_OBSERVATION_RETENTION_DAYS = 7
 // Retry policy and status codes: finite retries with a short linear backoff.
 const DEFAULT_MAX_RETRIES = 2
 const DEFAULT_RETRY_DELAY_MS = 250
@@ -11,8 +11,6 @@ const HTTP_OK = 200
 const HTTP_TOO_MANY_REQUESTS = 429
 const HTTP_SERVER_ERROR_MIN = 500
 const MAX_RECORDED_ERROR_LENGTH = 500
-
-import { setTimeout as delay } from 'node:timers/promises'
 
 const INSERT_OBSERVATION_SQL = `
     INSERT INTO aircraft_observations (
@@ -38,6 +36,21 @@ const UPDATE_RUN_SQL = `
     WHERE id = 1
 `
 
+const INSERT_REQUEST_HISTORY_SQL = `
+    INSERT INTO collector_request_history (
+        requested_at, completed_at, source, state, aircraft_count,
+        stored_departures, http_status, remaining_credits, error, archive_path
+    ) VALUES (
+        @requestedAt, @completedAt, @source, @state, @aircraftCount,
+        @storedDepartures, @httpStatus, @remainingCredits, @error, @archivePath
+    )
+`
+
+function recordedError (error) {
+    return String(error?.message || error)
+        .slice(0, MAX_RECORDED_ERROR_LENGTH)
+}
+
 function normalizeAircraft (aircraft, observedAt) {
     return {
         observedAt,
@@ -62,20 +75,19 @@ class Collector {
         maxRetries = DEFAULT_MAX_RETRIES,
         retryDelayMs = DEFAULT_RETRY_DELAY_MS,
         source = 'opensky',
-        observationRetentionDays = DEFAULT_OBSERVATION_RETENTION_DAYS
+        providerArchive = null
     }) {
         this.database = database
         this.provider = provider
+        this.providerArchive = providerArchive
         this.now = now
         this.maxRetries = maxRetries
         this.retryDelayMs = retryDelayMs
         this.source = source
-        this.observationRetentionDays = observationRetentionDays
-        this.lastCleanupDate = null
         this.insertObservation = database.prepare(INSERT_OBSERVATION_SQL)
         this.updateRun = database.prepare(UPDATE_RUN_SQL)
-        this.deleteOldObservations = database.prepare(
-            'DELETE FROM aircraft_observations WHERE observed_at < ?'
+        this.insertRequestHistory = database.prepare(
+            INSERT_REQUEST_HISTORY_SQL
         )
         this.selectRecentObservations = database.prepare(
             'SELECT observed_at AS observedAt, icao24, callsign, ' +
@@ -92,10 +104,29 @@ class Collector {
         let lastError
 
         for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+            const requestedAt = this.now().toISOString()
             try {
-                return await this.collect(params)
+                const result = await this.collect(params, requestedAt)
+                this.recordRequest({
+                    ...result,
+                    state: 'ok',
+                    httpStatus: HTTP_OK,
+                    error: null
+                })
+                return result
             } catch (error) {
                 lastError = error
+                this.recordRequest({
+                    requestedAt,
+                    completedAt: this.now().toISOString(),
+                    state: 'error',
+                    aircraftCount: null,
+                    storedDepartures: null,
+                    httpStatus: error.status || null,
+                    remainingCredits: null,
+                    error: recordedError(error),
+                    archivePath: null
+                })
                 if (!this.shouldRetry(error, attempt)) {
                     break
                 }
@@ -107,38 +138,48 @@ class Collector {
         throw lastError
     }
 
-    async collect (params) {
-        const observedAt = this.now().toISOString()
+    async collect (params, requestedAt = this.now().toISOString()) {
         const result = await this.provider.getAircraft(params)
+        const completedAt = this.now().toISOString()
+        const archivePath = result.rawResponse && this.providerArchive
+            ? this.providerArchive.write({
+                source: this.source,
+                requestedAt,
+                completedAt,
+                payload: result.rawResponse
+            })
+            : null
 
         const insertMany = this.database.transaction(aircraft => {
             return aircraft
                 .filter(item => item && item.icao24)
                 .map(item => this.insertObservation.run({
-                    ...normalizeAircraft(item, observedAt),
+                    ...normalizeAircraft(item, requestedAt),
                     source: this.source
                 }))
         })
 
         insertMany(result.aircraft)
-        const storedDepartures = this.processDepartures(observedAt)
-        const deletedObservations = this.cleanupObservations(observedAt)
+        const storedDepartures = this.processDepartures(requestedAt)
         this.updateRun.run({
-            success: observedAt,
+            success: completedAt,
             failure: null,
             status: HTTP_OK,
             credits: result.remainingCredits,
             error: null,
             state: 'ok',
-            updated: observedAt
+            updated: completedAt
         })
 
         return {
-            observedAt,
+            requestedAt,
+            completedAt,
+            observedAt: requestedAt,
+            aircraftCount: result.aircraft.length,
             count: result.aircraft.length,
             storedDepartures,
-            deletedObservations,
-            remainingCredits: result.remainingCredits
+            remainingCredits: result.remainingCredits,
+            archivePath
         }
     }
 
@@ -154,18 +195,22 @@ class Collector {
         )
     }
 
-    cleanupObservations (observedAt) {
-        // ISO 8601 timestamps begin with the 10-character date YYYY-MM-DD.
-        const cleanupDate = observedAt.slice(0, 10)
-        if (this.lastCleanupDate === cleanupDate) return 0
-
-        const cutoff = new Date(
-            Date.parse(observedAt) -
-                this.observationRetentionDays * MILLISECONDS_PER_DAY
-        ).toISOString()
-        const deleted = this.deleteOldObservations.run(cutoff).changes
-        this.lastCleanupDate = cleanupDate
-        return deleted
+    recordRequest ({
+        requestedAt, completedAt, state, aircraftCount, storedDepartures,
+        httpStatus, remainingCredits, error, archivePath
+    }) {
+        this.insertRequestHistory.run({
+            requestedAt,
+            completedAt,
+            source: this.source,
+            state,
+            aircraftCount,
+            storedDepartures,
+            httpStatus,
+            remainingCredits,
+            error,
+            archivePath
+        })
     }
 
     recordOutsideSchedule () {
@@ -181,8 +226,6 @@ class Collector {
         })
         return updatedAt
     }
-
-
     shouldRetry (error, attempt) {
         const retryable = !error.status ||
             error.status === HTTP_TOO_MANY_REQUESTS ||
@@ -198,7 +241,7 @@ class Collector {
             failure: failedAt,
             status: error.status || null,
             credits: null,
-            error: error.message.slice(0, MAX_RECORDED_ERROR_LENGTH),
+            error: recordedError(error),
             state: 'error',
             updated: failedAt
         })

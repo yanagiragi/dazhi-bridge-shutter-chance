@@ -205,7 +205,7 @@ Aircraft provider ──► Observation collector ──► SQLite
 
 ### `aircraft_observations`
 
-保存方向判定所需的短期原始資料：
+保存方向判定與未來統計所需的正規化 observation：
 
 - `id`
 - `observed_at`
@@ -221,7 +221,7 @@ Aircraft provider ──► Observation collector ──► SQLite
 - `on_ground`
 - `source`
 
-建議只保留有限天數，例如 7 天；實際期限開放設定。
+現行決策為永久保留；2026-09-23 起不再執行原本的 7 天清理。既有已清除資料無法回補。
 
 ### `departures`
 
@@ -243,6 +243,18 @@ Aircraft provider ──► Observation collector ──► SQLite
 ### `collector_runs` 或等效狀態
 
 記錄最後成功輪詢時間、HTTP 狀態、剩餘額度及錯誤摘要，供 health check 和「資料不足」判定使用。若能以更簡單的單列狀態表完成，可不保留完整歷史。
+
+### `collector_request_history`
+
+每次 provider request attempt 永久新增一筆，保存開始／完成時間、來源、成功或失敗、HTTP 狀態、航機數、departure 數、錯誤摘要及對應 archive path。`collector_runs` 仍只保存最新狀態供 health check；歷史涵蓋率與有效收集日則由本表計算。
+
+### Provider raw response archive
+
+成功的 adsb.fi 完整 JSON response 不塞入主要 SQLite，而是依 provider／本地年月／整點時段附加至 gzip JSON Lines：
+
+`PROVIDER_ARCHIVE_PATH/adsbfi/YYYY/MM/YYYY-MM-DD-HH.jsonl.gz`
+
+archive 永久保存於私人自架環境，不進入公開 snapshot。SQLite 與 archive 都是完整備份的必要部分；統計資料本身不另做永久 snapshot，必要時可由 departure、request history 與 archive 重新產生。
 
 ## 9. API 草案
 
@@ -474,7 +486,7 @@ Aircraft provider ──► Observation collector ──► SQLite
 2. 先以個人、非商業的自架服務進入階段 8；公開網站／GitHub Pages 的再發布權另行向 adsb.fi 確認。
 3. 公開 departure 僅提供時間、callsign、方向、跑道推定、信心與 source；不公開 ICAO24 與原始 observation。
 4. provider 為 `adsbfi` 時，網頁 footer 顯示並連結 adsb.fi；OpenSky 模式不顯示此署名。
-5. 原始 observation 僅在自架環境保存 7 天，departure 長期保存；清理機制於階段 8 實作。
+5. 原始 observation 的 7 天保存決策已於 2026-09-23 被取代：正規化 observation、departure 與每次 provider request history 改為永久保存；adsb.fi 完整 response 另按小時壓縮封存於私人自架環境。
 6. 真實 westbound 實測已於 2026-09-20 完成，階段 4 的必要現場驗收缺口已關閉。
 
 ### 階段 8：長時間運作與部署驗證
@@ -496,7 +508,7 @@ Aircraft provider ──► Observation collector ──► SQLite
 - 模擬所選資料來源失敗（若使用 OpenSky，另包含 token 過期）及 SQLite 重啟後，服務可恢復且不製造重複 departure。
 - 從全新 checkout 依 README 可完成啟動、查詢 API 及開啟網頁。
 
-結果：已完成。已完成 06:30–21:00 active window、outside_schedule 狀態、graceful shutdown、結構化日誌、7 天 observation 清理、正式 collector 與 detector 串接、30 分鐘 departure 去重、Docker log rotation，以及 SQLite backup／restore。隔離 Docker smoke test、容器重啟、volume 持久化、真實 adsb.fi 請求、排程外不 polling、隔日 06:30 自動恢復與備份還原均已驗證。24 小時 soak test 自 2026-09-17 15:10 至 2026-09-18 15:12（Asia/Taipei），共 97 組監控樣本、1,746 次成功 collector cycle、0 次記錄到的失敗，容器全程 healthy 且未重啟；記憶體最大 55.71 MiB、平均 50.49 MiB。32 項測試、ESLint、Compose config、SQLite integrity check 與 diff check 全部通過。另從已提交階段 8 程式的 HEAD `2077a61` 建立全新 clone，依 README 以獨立 Compose 環境確認 image 建置、schema version 2、真實 provider 收集、health、status API 與網頁均正常。後續修正已排入階段 8.5。詳見 [`STAGE8_RESULTS.md`](validation/STAGE8_RESULTS.md)。
+結果：已完成。已完成 06:30–21:00 active window、outside_schedule 狀態、graceful shutdown、結構化日誌、7 天 observation 清理、正式 collector 與 detector 串接、30 分鐘 departure 去重、Docker log rotation，以及 SQLite backup／restore。隔離 Docker smoke test、容器重啟、volume 持久化、真實 adsb.fi 請求、排程外不 polling、隔日 06:30 自動恢復與備份還原均已驗證。24 小時 soak test 自 2026-09-17 15:10 至 2026-09-18 15:12（Asia/Taipei），共 97 組監控樣本、1,746 次成功 collector cycle、0 次記錄到的失敗，容器全程 healthy 且未重啟；記憶體最大 55.71 MiB、平均 50.49 MiB。32 項測試、ESLint、Compose config、SQLite integrity check 與 diff check 全部通過。另從已提交階段 8 程式的 HEAD `2077a61` 建立全新 clone，依 README 以獨立 Compose 環境確認 image 建置、schema version 2、真實 provider 收集、health、status API 與網頁均正常。後續修正已排入階段 8.5。詳見 [`STAGE8_RESULTS.md`](validation/STAGE8_RESULTS.md)。其中 7 天清理是當時通過的驗收結果，已由 2026-09-23 的永久保存決策取代。
 
 ### 階段 8.5：Soak test 問題修正與使用者體驗整理
 
@@ -796,6 +808,8 @@ Aircraft provider ──► Observation collector ──► SQLite
 結果：已完成。公開 snapshot schema、summary allowlist、相對路徑雙模式前端、opt-in container exporter、host publisher、operator catalog 複製、`pull --ff-only` 同步、變更偵測與操作文件均已加入；`worktree-pages` 中的 `gh-pages` worktree、首次 orphan 初始化、公開成品與相同輸出不重複 commit 均已驗證。`pages:sync` 可從執行中的 Docker service 安全備份 SQLite、產生 `data/status.json` 並驗證公開成品，且不執行 Git 寫入；`pages:sync-and-publish` 則提供具 `flock`、HTTPS remote、fine-grained PAT askpass、非互動失敗及發布後驗證的 cron 自動化流程。公開 snapshot 已以實際 container DB 驗證 schema version 1、summary-only allowlist、無 precise track，並能呈現今日統計、近期航班與共用 advice 結果。使用者於 2026-09-20 確認階段 9 結案；所有人工 Git commit／push 仍由使用者操作，只有明確啟用的 cron publisher 會依設定自動發布。
 
 階段 9 feedback（已完成）：統一 host 端的 Pages snapshot staging 路徑為 `runtime/pages/status.json`。`runtime/backup/` 只保留同步期間建立的 SQLite 備份，`public/` 只保留可發布的前端原始資產；`worktree-pages/data/status.json` 則是準備由 `gh-pages` branch 發布的複本。exporter、publisher、Docker bind mount、手動同步、cron 自動發布與操作文件均使用同一 staging 路徑，不再產生 `public/data/status.json`、`runtime/public/status.json` 或 `runtime/backup/status-from-container-db.json`。
+
+階段 9 feedback（已完成）：新增不影響當日 advice 的歷史統計卡片，提供最近 7 天、30 天與全部資料範圍，以及每日／整點時段 westbound、eastbound、unknown 堆疊比例。方向統計由永久保存的 departure 計算；有效收集日由新增的永久 `collector_request_history` 判斷。正規化 observations 改為永久保存，adsb.fi 完整 response 以每小時 gzip JSON Lines 封存於 `PROVIDER_ARCHIVE_PATH`，不進入公開 snapshot；公開 snapshot 只包含彙總統計。SQLite backup 不包含獨立 archive，完整備份須同時保存兩者。
 
 ### 階段 10：文件整理與 Architecture Decision Records
 

@@ -16,6 +16,7 @@ import { openDatabase } from './database.js'
 import { OpenSkyClient } from './opensky.js'
 import { AdsbFiClient } from './adsbfi.js'
 import { Collector } from './collector.js'
+import { ProviderArchive } from './provider-archive.js'
 import {
     isWithinActiveWindow,
     nextActiveWindowStart,
@@ -24,6 +25,7 @@ import {
 import { buildAdvice, localDateKey } from './advice.js'
 import { loadOperatorCatalog } from './operator-catalog.js'
 import { buildPublicSnapshot, validatePublicSnapshot } from './snapshot.js'
+import { buildHistoricalStatistics } from './statistics.js'
 
 // HTTP status codes returned by the JSON API.
 const HTTP_OK = 200
@@ -181,6 +183,12 @@ function querySnapshot (
                 nextStartAt
             }
         },
+        statistics: buildHistoricalStatistics({
+            database,
+            now,
+            timezone,
+            schedule: collectorSchedule
+        }),
         collector: collectorRun ?? null
     }
 }
@@ -376,7 +384,13 @@ function createCollector (config, database) {
         database,
         provider,
         source: config.aircraftDataProvider,
-        observationRetentionDays: config.observationRetentionDays
+        providerArchive: config.aircraftDataProvider ===
+            AIRCRAFT_PROVIDER_ADSB_FI
+            ? new ProviderArchive({
+                rootPath: config.providerArchivePath,
+                timezone: config.collectorActiveTimeZone
+            })
+            : null
     })
 }
 
@@ -509,6 +523,7 @@ function start (config = loadConfig()) {
         structuredLog('server-started', {
             port: config.port,
             databasePath: config.databasePath,
+            providerArchivePath: config.providerArchivePath,
             operatorCatalogPath: config.operatorCatalogPath,
             schemaVersion: opened.schemaVersion,
             timezone: config.timezone,

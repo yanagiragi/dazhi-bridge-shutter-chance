@@ -9,6 +9,10 @@
     const SUPPORTED_THEMES = [LIGHT_THEME, DARK_THEME]
     const REFRESH_INTERVAL_MS = 60 * 1000
     const EMPTY_VALUE = '--'
+    // History controls select precomputed aggregates and never affect advice.
+    const DEFAULT_STATISTICS_RANGE = '7'
+    const DEFAULT_STATISTICS_VIEW = 'daily'
+    const PERCENT_MAXIMUM = 100
     // Dashboard endpoints and the provider ID that requires attribution.
     const DASHBOARD_STATUS_URL = './dashboard-data.json'
     // Favicon colors identify the current dashboard data/detail mode.
@@ -26,7 +30,6 @@
         'https://www.flightradar24.com/data/flights/'
     const FLIGHTRADAR24_CALLSIGN_BASE_URL =
         'https://www.flightradar24.com/'
-
 
     // Active-window values use a validated 24-hour HH:mm representation.
     const SCHEDULE_TIME_PATTERN = /^([01][0-9]|2[0-3]):([0-5][0-9])$/
@@ -76,6 +79,8 @@
     let theme = getInitialTheme()
     document.documentElement.dataset.theme = theme
     let latestPayload = null
+    let statisticsRange = DEFAULT_STATISTICS_RANGE
+    let statisticsView = DEFAULT_STATISTICS_VIEW
     let dataSource = 'api'
     let trackDiagramSequence = 0
 
@@ -673,6 +678,123 @@
         }
     }
 
+    function formatHistoryDate (value) {
+        if (typeof value !== 'string') return EMPTY_VALUE
+        return value.split('-').join('/')
+    }
+
+    function formatPercentage (value) {
+        if (!Number.isFinite(value)) return EMPTY_VALUE
+        return new Intl.NumberFormat(language, {
+            maximumFractionDigits: 1
+        }).format(value) + '%'
+    }
+
+    function formatCoverageSummary (count) {
+        return translate('history.coverageSummary')
+            .replace('{count}', String(count))
+    }
+
+    function setPressedControl (selector, selectedValue, dataKey) {
+        document.querySelectorAll(selector).forEach(button => {
+            button.setAttribute(
+                'aria-pressed',
+                String(button.dataset[dataKey] === selectedValue)
+            )
+        })
+    }
+
+    function createHistoryBar (item, label) {
+        const row = document.createElement('div')
+        row.className = 'history-row'
+        const heading = createTextElement('span', 'history-row-label', label)
+        const bar = document.createElement('span')
+        bar.className = 'history-bar'
+        bar.setAttribute('aria-hidden', 'true')
+        const total = item.total || 0
+
+        for (const direction of ['westbound', 'eastbound', 'unknown']) {
+            const segment = document.createElement('span')
+            segment.className = `history-bar-segment ${direction}`
+            segment.style.width = total === 0
+                ? '0%'
+                : Math.min(
+                    PERCENT_MAXIMUM,
+                    item[direction] / total * PERCENT_MAXIMUM
+                ) + '%'
+            bar.append(segment)
+        }
+
+        const sample = item.directional === 0
+            ? translate('history.noDirectionalData')
+            : `${formatPercentage(item.westboundPercentage)} · ` +
+                `${item.westbound} / ${item.directional} ` +
+                translate('history.flights')
+        const value = createTextElement('span', 'history-row-value', sample)
+        row.append(heading, bar, value)
+        return row
+    }
+
+    function renderHistoricalStatistics (statistics) {
+        const chart = element('history-chart')
+        chart.replaceChildren()
+        setPressedControl(
+            '[data-statistics-range]',
+            statisticsRange,
+            'statisticsRange'
+        )
+        setPressedControl(
+            '[data-statistics-view]',
+            statisticsView,
+            'statisticsView'
+        )
+
+        const selected = statistics?.ranges?.[statisticsRange]
+        if (!selected) {
+            element('history-westbound-share').textContent = EMPTY_VALUE
+            element('history-opportunity-days').textContent = EMPTY_VALUE
+            element('history-period').textContent = EMPTY_VALUE
+            chart.append(createTextElement(
+                'p', 'muted', translate('history.noData')
+            ))
+            return
+        }
+
+        element('history-westbound-share').textContent =
+            formatPercentage(selected.totals.westboundPercentage) + ' · ' +
+            `${selected.totals.westbound} / ${selected.totals.directional} ` +
+            translate('history.flights')
+        element('history-opportunity-days').textContent =
+            formatPercentage(selected.opportunityDays.percentage) + ' · ' +
+            `${selected.opportunityDays.westbound} / ` +
+            `${selected.opportunityDays.observed} ` + translate('history.days')
+
+        const period = selected.observedFrom && selected.observedTo
+            ? `${formatHistoryDate(selected.observedFrom)} ` +
+                `${translate('history.periodSeparator')} ` +
+                `${formatHistoryDate(selected.observedTo)} · ` +
+                formatCoverageSummary(selected.opportunityDays.observed)
+            : translate('history.noData')
+        element('history-period').textContent = period
+
+        const values = statisticsView === 'hourly'
+            ? selected.hourly
+            : selected.daily
+        if (values.length === 0) {
+            chart.append(createTextElement(
+                'p', 'muted', translate('history.noData')
+            ))
+            return
+        }
+
+        for (const item of values) {
+            const label = statisticsView === 'hourly'
+                ? `${item.start}–${item.end}`
+                : formatHistoryDate(item.date)
+            chart.append(createHistoryBar(item, label))
+        }
+    }
+
     function renderRecommendation (advice) {
         const style = RECOMMENDATION_STYLES[advice.confidence] ||
             RECOMMENDATION_STYLES.insufficient
@@ -713,6 +835,7 @@
         element('westbound').textContent = advice.today.westbound
         element('eastbound').textContent = advice.today.eastbound
         element('unknown').textContent = advice.today.unknown
+        renderHistoricalStatistics(payload.statistics)
         renderCollectionStatus(advice, payload.collector)
         element('data-source').textContent = translate(
             dataSource === 'snapshot'
@@ -733,6 +856,11 @@
 
         document.querySelectorAll('[data-i18n]').forEach(node => {
             node.textContent = translate(node.dataset.i18n)
+        })
+
+        document.querySelectorAll('[data-i18n-aria-label]').forEach(node => {
+            node.setAttribute('aria-label',
+                translate(node.dataset.i18nAriaLabel))
         })
 
         element('data-source').textContent = translate(
@@ -781,6 +909,7 @@
         return {
             advice: snapshot.advice,
             generatedAt: snapshot.generatedAt,
+            statistics: snapshot.statistics,
             collector: {
                 state: snapshot.collectorStatus,
                 last_success_at: snapshot.collectorLastSuccessAt,
@@ -836,6 +965,23 @@
         await loadData(dataSource)
         setInterval(() => loadData(dataSource), REFRESH_INTERVAL_MS)
     }
+
+    document.querySelectorAll('[data-statistics-range]').forEach(button => {
+        button.addEventListener('click', () => {
+            statisticsRange = button.dataset.statisticsRange
+            if (latestPayload) {
+                renderHistoricalStatistics(latestPayload.statistics)
+            }
+        })
+    })
+    document.querySelectorAll('[data-statistics-view]').forEach(button => {
+        button.addEventListener('click', () => {
+            statisticsView = button.dataset.statisticsView
+            if (latestPayload) {
+                renderHistoricalStatistics(latestPayload.statistics)
+            }
+        })
+    })
 
     element('theme').addEventListener('click', changeTheme)
     element('language').addEventListener('click', changeLanguage)

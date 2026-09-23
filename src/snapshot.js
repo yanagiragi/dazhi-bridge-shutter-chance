@@ -68,6 +68,7 @@ function buildPublicSnapshot ({
             end: schedule.end,
             timeZone: schedule.timezone
         },
+        statistics: serviceSnapshot.statistics,
         nextCollectionAt: schedule.nextStartAt,
         provider,
         advice: {

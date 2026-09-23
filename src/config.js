@@ -23,9 +23,6 @@ const DEFAULT_COLLECTOR_ACTIVE_TIME_ZONE = 'Asia/Taipei'
 const DEFAULT_COLLECTOR_ACTIVE_START = '06:30'
 const DEFAULT_COLLECTOR_ACTIVE_END = '21:00'
 
-// Raw observations are local diagnostic data retained for this many days.
-const DEFAULT_OBSERVATION_RETENTION_DAYS = 7
-
 // Departure-detail modes control whether exact track coordinates leave the
 // server. Summary is safe for public deployments; precise is for private use.
 const DEPARTURE_DETAILS_MODE_SUMMARY = 'summary'
@@ -115,6 +112,10 @@ function loadConfig (env = process.env) {
     const databasePath = path.resolve(
         env.DATABASE_PATH || './data/dazhi.sqlite'
     )
+    const providerArchivePath = path.resolve(
+        env.PROVIDER_ARCHIVE_PATH ||
+            path.join(path.dirname(databasePath), 'provider-archive')
+    )
     const operatorCatalogPath = path.resolve(
         env.OPERATOR_CATALOG_PATH || DEFAULT_OPERATOR_CATALOG_PATH
     )
@@ -122,6 +123,7 @@ function loadConfig (env = process.env) {
     return {
         port,
         databasePath,
+        providerArchivePath,
         operatorCatalogPath,
         timezone: env.TZ || 'Asia/Taipei',
         apiBearerToken: env.API_BEARER_TOKEN || null,
@@ -163,11 +165,6 @@ function loadConfig (env = process.env) {
         collectorActiveEnd: timeSetting(
             env.COLLECTOR_ACTIVE_END || DEFAULT_COLLECTOR_ACTIVE_END,
             'COLLECTOR_ACTIVE_END'
-        ),
-        observationRetentionDays: positiveInteger(
-            env.OBSERVATION_RETENTION_DAYS ||
-                String(DEFAULT_OBSERVATION_RETENTION_DAYS),
-            'OBSERVATION_RETENTION_DAYS'
         ),
         openskyBounds: {
             lamin: finiteNumber(env.OPENSKY_LAMIN || '25.06', 'OPENSKY_LAMIN'),

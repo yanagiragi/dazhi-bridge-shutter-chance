@@ -25,7 +25,7 @@ test('health endpoint reports database and schema status', async t => {
     const payload = await response.json()
     assert.equal(payload.status, 'ok')
     assert.equal(payload.database, 'ok')
-    assert.equal(payload.schemaVersion, 3)
+    assert.equal(payload.schemaVersion, 4)
     assert.match(payload.checkedAt, /^\d{4}-\d{2}-\d{2}T/)
 })
 
@@ -102,6 +102,9 @@ test('status API returns advice and collector state', async t => {
     assert.equal(payload.advice.confidence, 'low')
     assert.equal(payload.collector.remaining_credits, 99)
     assert.equal(payload.collector.state, 'ok')
+    assert.equal(payload.statistics.ranges['7'].totals.westbound, 1)
+    assert.equal(payload.statistics.ranges['30'].totals.westbound, 1)
+    assert.equal(payload.statistics.ranges.all.totals.westbound, 1)
     assert.deepEqual(payload.advice.collectionSchedule, {
         timezone: 'Asia/Taipei',
         start: '06:30',
@@ -337,6 +340,7 @@ test('dashboard serves the localized web shell', async t => {
     assert.match(html, /id="theme"/)
     assert.match(html, /id="collection-status"/)
     assert.match(html, /rel="icon" href="\.\/favicon-snapshot\.svg"/)
+    assert.match(html, /id="history-chart"/)
     assert.doesNotMatch(html, /data-i18n="live"/)
 
     const assetBaseUrl = 'http://127.0.0.1:' + server.address().port
@@ -347,6 +351,7 @@ test('dashboard serves the localized web shell', async t => {
     assert.match(styles, /track-diagram/)
     assert.match(styles, /color-status-active/)
     assert.match(styles, /departure-details-heading/)
+    assert.match(styles, /history-bar-segment/)
     assert.match(
         styles,
         /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/
@@ -362,6 +367,7 @@ test('dashboard serves the localized web shell', async t => {
     assert.match(script, /formatCollectionStatus/)
     assert.match(script, /formatScheduleRange/)
     assert.match(script, /appendCompassIndicator/)
+    assert.match(script, /renderHistoricalStatistics/)
     assert.match(
         script,
         /eastLabelX = TRACK_VIEWBOX_WIDTH - TRACK_VIEWBOX_PADDING/
