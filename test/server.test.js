@@ -133,6 +133,46 @@ test('status API returns advice and collector state', async t => {
     })
 })
 
+test('dashboard data supports a private historical time parameter', async t => {
+    const directory = mkdtempSync(join(tmpdir(), 'dazhi-http-'))
+    const opened = openDatabase(join(directory, 'dazhi.sqlite'))
+    opened.database.prepare('INSERT INTO departures (icao24, callsign, detected_at, direction, runway_estimate, detection_confidence, evidence_json, source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+        'abc123',
+        'B31988',
+        '2026-09-16T03:30:00.000Z',
+        'eastbound',
+        '10',
+        'high',
+        JSON.stringify({ samples: 2, directionSamples: 2 }),
+        'test',
+        '2026-09-16T03:30:00.000Z'
+    )
+    const server = createServer({
+        ...opened,
+        now: () => new Date('2026-09-20T08:00:00.000Z')
+    })
+
+    t.after(() => {
+        server.close()
+        opened.database.close()
+        rmSync(directory, { recursive: true, force: true })
+    })
+    await new Promise(resolve => server.listen(0, resolve))
+    const baseUrl = 'http://127.0.0.1:' + server.address().port
+    const historical = await fetch(
+        baseUrl + '/dashboard-data.json?at=2026-09-16T04:00:00.000Z'
+    )
+    assert.equal(historical.status, 200)
+    const payload = await historical.json()
+    assert.equal(payload.advice.date, '2026-09-16')
+    assert.equal(payload.advice.today.total, 1)
+    assert.equal(payload.advice.recentDepartures[0].callsign, 'B31988')
+
+    const invalid = await fetch(baseUrl + '/dashboard-data.json?at=invalid')
+    assert.equal(invalid.status, 400)
+})
+
+
 test('status API reports the next collection time outside schedule', async t => {
     const directory = mkdtempSync(join(tmpdir(), 'dazhi-http-'))
     const opened = openDatabase(join(directory, 'dazhi.sqlite'))

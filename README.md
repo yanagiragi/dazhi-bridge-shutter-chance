@@ -223,6 +223,7 @@ Open `http://127.0.0.1:3000/` for the mobile-first dashboard. The interface supp
 
 `/dashboard-data.json` is enabled only with `WEB_ENABLED=true` and follows `DEPARTURE_DETAILS_MODE`. A `precise` self-hosted dashboard must therefore be protected as a whole by a reverse proxy, VPN, or private network; use `summary` for a publicly reachable dashboard.
 
+For private debugging, a self-hosted dashboard can inspect a historical cutoff with an ISO timestamp query, for example `/?at=2026-09-20T08:00:00Z`. The server uses that time to filter departures and calculate the displayed Taipei date. GitHub Pages snapshot mode ignores this parameter and remains limited to its published snapshot.
 ## GitHub Pages snapshot
 
 The Pages deployment is a static snapshot and does not expose the private HTTP API. Enable snapshot export only when a host publisher is configured:

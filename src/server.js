@@ -66,6 +66,17 @@ function parseLimit (requestUrl) {
     return limit
 }
 
+function parseDebugTime (requestUrl) {
+    const raw = requestUrl.searchParams.get('at')
+    if (raw === null) return null
+
+    const parsed = new Date(raw)
+    if (!raw || Number.isNaN(parsed.getTime())) {
+        throw new Error('at must be a valid ISO timestamp')
+    }
+    return parsed
+}
+
 function authorized (request, apiToken) {
     if (!apiToken) return true
     return request.headers.authorization === `Bearer ${apiToken}`
@@ -241,10 +252,19 @@ function createServer ({
 
         if (webEnabled && request.method === 'GET' &&
             requestUrl.pathname === DASHBOARD_DATA_PATH) {
+            let requestedAt
+            try {
+                requestedAt = parseDebugTime(requestUrl)
+            } catch (error) {
+                return json(response, HTTP_BAD_REQUEST, {
+                    error: 'bad_request',
+                    message: error.message
+                })
+            }
             try {
                 const snapshot = querySnapshot(
                     database,
-                    now(),
+                    requestedAt ?? now(),
                     timezone,
                     DEFAULT_DEPARTURE_QUERY_LIMIT,
                     departureDetailsMode,
