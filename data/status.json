@@ -1,12 +1,833 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-23T04:30:02.638Z",
-  "collectorLastSuccessAt": "2026-09-23T04:29:39.703Z",
+  "generatedAt": "2026-09-23T05:23:03.760Z",
+  "collectorLastSuccessAt": "2026-09-23T05:22:40.569Z",
   "collectorStatus": "active",
   "activeWindow": {
     "start": "06:30",
     "end": "21:00",
     "timeZone": "Asia/Taipei"
+  },
+  "statistics": {
+    "timezone": "Asia/Taipei",
+    "ranges": {
+      "30": {
+        "requestedDays": 30,
+        "observedFrom": "2026-09-19",
+        "observedTo": "2026-09-23",
+        "totals": {
+          "westbound": 5,
+          "eastbound": 323,
+          "unknown": 0,
+          "total": 328,
+          "directional": 328,
+          "westboundPercentage": 1.5
+        },
+        "opportunityDays": {
+          "westbound": 0,
+          "observed": 0,
+          "percentage": null
+        },
+        "daily": [
+          {
+            "date": "2026-09-23",
+            "westbound": 0,
+            "eastbound": 33,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 33,
+            "directional": 33,
+            "westboundPercentage": 0
+          },
+          {
+            "date": "2026-09-22",
+            "westbound": 0,
+            "eastbound": 74,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 74,
+            "directional": 74,
+            "westboundPercentage": 0
+          },
+          {
+            "date": "2026-09-21",
+            "westbound": 0,
+            "eastbound": 75,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 75,
+            "directional": 75,
+            "westboundPercentage": 0
+          },
+          {
+            "date": "2026-09-20",
+            "westbound": 5,
+            "eastbound": 68,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 73,
+            "directional": 73,
+            "westboundPercentage": 6.8
+          },
+          {
+            "date": "2026-09-19",
+            "westbound": 0,
+            "eastbound": 73,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 73,
+            "directional": 73,
+            "westboundPercentage": 0
+          }
+        ],
+        "hourly": [
+          {
+            "hour": 7,
+            "start": "07:00",
+            "end": "08:00",
+            "westbound": 0,
+            "eastbound": 34,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 34,
+            "directional": 34,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 8,
+            "start": "08:00",
+            "end": "09:00",
+            "westbound": 0,
+            "eastbound": 22,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 22,
+            "directional": 22,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 9,
+            "start": "09:00",
+            "end": "10:00",
+            "westbound": 0,
+            "eastbound": 26,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 26,
+            "directional": 26,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 10,
+            "start": "10:00",
+            "end": "11:00",
+            "westbound": 4,
+            "eastbound": 23,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 27,
+            "directional": 27,
+            "westboundPercentage": 14.8
+          },
+          {
+            "hour": 11,
+            "start": "11:00",
+            "end": "12:00",
+            "westbound": 1,
+            "eastbound": 21,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 22,
+            "directional": 22,
+            "westboundPercentage": 4.5
+          },
+          {
+            "hour": 12,
+            "start": "12:00",
+            "end": "13:00",
+            "westbound": 0,
+            "eastbound": 21,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 21,
+            "directional": 21,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 13,
+            "start": "13:00",
+            "end": "14:00",
+            "westbound": 0,
+            "eastbound": 21,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 21,
+            "directional": 21,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 14,
+            "start": "14:00",
+            "end": "15:00",
+            "westbound": 0,
+            "eastbound": 34,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 34,
+            "directional": 34,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 15,
+            "start": "15:00",
+            "end": "16:00",
+            "westbound": 0,
+            "eastbound": 16,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 16,
+            "directional": 16,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 16,
+            "start": "16:00",
+            "end": "17:00",
+            "westbound": 0,
+            "eastbound": 18,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 18,
+            "directional": 18,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 17,
+            "start": "17:00",
+            "end": "18:00",
+            "westbound": 0,
+            "eastbound": 29,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 29,
+            "directional": 29,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 18,
+            "start": "18:00",
+            "end": "19:00",
+            "westbound": 0,
+            "eastbound": 26,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 26,
+            "directional": 26,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 19,
+            "start": "19:00",
+            "end": "20:00",
+            "westbound": 0,
+            "eastbound": 13,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 13,
+            "directional": 13,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 20,
+            "start": "20:00",
+            "end": "21:00",
+            "westbound": 0,
+            "eastbound": 5,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 5,
+            "directional": 5,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 6,
+            "start": "06:30",
+            "end": "07:00",
+            "westbound": 0,
+            "eastbound": 14,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 14,
+            "directional": 14,
+            "westboundPercentage": 0
+          }
+        ]
+      },
+      "90": {
+        "requestedDays": 90,
+        "observedFrom": "2026-09-19",
+        "observedTo": "2026-09-23",
+        "totals": {
+          "westbound": 5,
+          "eastbound": 323,
+          "unknown": 0,
+          "total": 328,
+          "directional": 328,
+          "westboundPercentage": 1.5
+        },
+        "opportunityDays": {
+          "westbound": 0,
+          "observed": 0,
+          "percentage": null
+        },
+        "daily": [
+          {
+            "date": "2026-09-23",
+            "westbound": 0,
+            "eastbound": 33,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 33,
+            "directional": 33,
+            "westboundPercentage": 0
+          },
+          {
+            "date": "2026-09-22",
+            "westbound": 0,
+            "eastbound": 74,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 74,
+            "directional": 74,
+            "westboundPercentage": 0
+          },
+          {
+            "date": "2026-09-21",
+            "westbound": 0,
+            "eastbound": 75,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 75,
+            "directional": 75,
+            "westboundPercentage": 0
+          },
+          {
+            "date": "2026-09-20",
+            "westbound": 5,
+            "eastbound": 68,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 73,
+            "directional": 73,
+            "westboundPercentage": 6.8
+          },
+          {
+            "date": "2026-09-19",
+            "westbound": 0,
+            "eastbound": 73,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 73,
+            "directional": 73,
+            "westboundPercentage": 0
+          }
+        ],
+        "hourly": [
+          {
+            "hour": 7,
+            "start": "07:00",
+            "end": "08:00",
+            "westbound": 0,
+            "eastbound": 34,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 34,
+            "directional": 34,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 8,
+            "start": "08:00",
+            "end": "09:00",
+            "westbound": 0,
+            "eastbound": 22,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 22,
+            "directional": 22,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 9,
+            "start": "09:00",
+            "end": "10:00",
+            "westbound": 0,
+            "eastbound": 26,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 26,
+            "directional": 26,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 10,
+            "start": "10:00",
+            "end": "11:00",
+            "westbound": 4,
+            "eastbound": 23,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 27,
+            "directional": 27,
+            "westboundPercentage": 14.8
+          },
+          {
+            "hour": 11,
+            "start": "11:00",
+            "end": "12:00",
+            "westbound": 1,
+            "eastbound": 21,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 22,
+            "directional": 22,
+            "westboundPercentage": 4.5
+          },
+          {
+            "hour": 12,
+            "start": "12:00",
+            "end": "13:00",
+            "westbound": 0,
+            "eastbound": 21,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 21,
+            "directional": 21,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 13,
+            "start": "13:00",
+            "end": "14:00",
+            "westbound": 0,
+            "eastbound": 21,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 21,
+            "directional": 21,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 14,
+            "start": "14:00",
+            "end": "15:00",
+            "westbound": 0,
+            "eastbound": 34,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 34,
+            "directional": 34,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 15,
+            "start": "15:00",
+            "end": "16:00",
+            "westbound": 0,
+            "eastbound": 16,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 16,
+            "directional": 16,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 16,
+            "start": "16:00",
+            "end": "17:00",
+            "westbound": 0,
+            "eastbound": 18,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 18,
+            "directional": 18,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 17,
+            "start": "17:00",
+            "end": "18:00",
+            "westbound": 0,
+            "eastbound": 29,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 29,
+            "directional": 29,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 18,
+            "start": "18:00",
+            "end": "19:00",
+            "westbound": 0,
+            "eastbound": 26,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 26,
+            "directional": 26,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 19,
+            "start": "19:00",
+            "end": "20:00",
+            "westbound": 0,
+            "eastbound": 13,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 13,
+            "directional": 13,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 20,
+            "start": "20:00",
+            "end": "21:00",
+            "westbound": 0,
+            "eastbound": 5,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 5,
+            "directional": 5,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 6,
+            "start": "06:30",
+            "end": "07:00",
+            "westbound": 0,
+            "eastbound": 14,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 14,
+            "directional": 14,
+            "westboundPercentage": 0
+          }
+        ]
+      },
+      "all": {
+        "requestedDays": null,
+        "observedFrom": "2026-09-19",
+        "observedTo": "2026-09-23",
+        "totals": {
+          "westbound": 5,
+          "eastbound": 323,
+          "unknown": 0,
+          "total": 328,
+          "directional": 328,
+          "westboundPercentage": 1.5
+        },
+        "opportunityDays": {
+          "westbound": 0,
+          "observed": 0,
+          "percentage": null
+        },
+        "daily": [
+          {
+            "date": "2026-09-23",
+            "westbound": 0,
+            "eastbound": 33,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 33,
+            "directional": 33,
+            "westboundPercentage": 0
+          },
+          {
+            "date": "2026-09-22",
+            "westbound": 0,
+            "eastbound": 74,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 74,
+            "directional": 74,
+            "westboundPercentage": 0
+          },
+          {
+            "date": "2026-09-21",
+            "westbound": 0,
+            "eastbound": 75,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 75,
+            "directional": 75,
+            "westboundPercentage": 0
+          },
+          {
+            "date": "2026-09-20",
+            "westbound": 5,
+            "eastbound": 68,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 73,
+            "directional": 73,
+            "westboundPercentage": 6.8
+          },
+          {
+            "date": "2026-09-19",
+            "westbound": 0,
+            "eastbound": 73,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 73,
+            "directional": 73,
+            "westboundPercentage": 0
+          }
+        ],
+        "hourly": [
+          {
+            "hour": 7,
+            "start": "07:00",
+            "end": "08:00",
+            "westbound": 0,
+            "eastbound": 34,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 34,
+            "directional": 34,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 8,
+            "start": "08:00",
+            "end": "09:00",
+            "westbound": 0,
+            "eastbound": 22,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 22,
+            "directional": 22,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 9,
+            "start": "09:00",
+            "end": "10:00",
+            "westbound": 0,
+            "eastbound": 26,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 26,
+            "directional": 26,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 10,
+            "start": "10:00",
+            "end": "11:00",
+            "westbound": 4,
+            "eastbound": 23,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 27,
+            "directional": 27,
+            "westboundPercentage": 14.8
+          },
+          {
+            "hour": 11,
+            "start": "11:00",
+            "end": "12:00",
+            "westbound": 1,
+            "eastbound": 21,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 22,
+            "directional": 22,
+            "westboundPercentage": 4.5
+          },
+          {
+            "hour": 12,
+            "start": "12:00",
+            "end": "13:00",
+            "westbound": 0,
+            "eastbound": 21,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 21,
+            "directional": 21,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 13,
+            "start": "13:00",
+            "end": "14:00",
+            "westbound": 0,
+            "eastbound": 21,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 21,
+            "directional": 21,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 14,
+            "start": "14:00",
+            "end": "15:00",
+            "westbound": 0,
+            "eastbound": 34,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 34,
+            "directional": 34,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 15,
+            "start": "15:00",
+            "end": "16:00",
+            "westbound": 0,
+            "eastbound": 16,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 16,
+            "directional": 16,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 16,
+            "start": "16:00",
+            "end": "17:00",
+            "westbound": 0,
+            "eastbound": 18,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 18,
+            "directional": 18,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 17,
+            "start": "17:00",
+            "end": "18:00",
+            "westbound": 0,
+            "eastbound": 29,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 29,
+            "directional": 29,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 18,
+            "start": "18:00",
+            "end": "19:00",
+            "westbound": 0,
+            "eastbound": 26,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 26,
+            "directional": 26,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 19,
+            "start": "19:00",
+            "end": "20:00",
+            "westbound": 0,
+            "eastbound": 13,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 13,
+            "directional": 13,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 20,
+            "start": "20:00",
+            "end": "21:00",
+            "westbound": 0,
+            "eastbound": 5,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 5,
+            "directional": 5,
+            "westboundPercentage": 0
+          },
+          {
+            "hour": 6,
+            "start": "06:30",
+            "end": "07:00",
+            "westbound": 0,
+            "eastbound": 14,
+            "unknown": 0,
+            "successfulRequests": 0,
+            "failedRequests": 0,
+            "total": 14,
+            "directional": 14,
+            "westboundPercentage": 0
+          }
+        ]
+      }
+    }
   },
   "nextCollectionAt": null,
   "provider": "adsbfi",
@@ -17,7 +838,7 @@
     "recommendation": "low-opportunity",
     "confidence": "low",
     "reason": "The latest departure was not westbound or there is only one directional sample",
-    "lastSuccessAt": "2026-09-23T04:29:39.703Z",
+    "lastSuccessAt": "2026-09-23T05:22:40.569Z",
     "collectionSchedule": {
       "timezone": "Asia/Taipei",
       "start": "06:30",
@@ -26,12 +847,52 @@
       "nextStartAt": null
     },
     "today": {
-      "total": 31,
-      "eastbound": 31,
+      "total": 33,
+      "eastbound": 33,
       "westbound": 0,
       "unknown": 0
     },
     "recentDepartures": [
+      {
+        "callsign": "UIA8725",
+        "detected_at": "2026-09-23T05:17:40.450Z",
+        "direction": "eastbound",
+        "runway_estimate": "10",
+        "detection_confidence": "high",
+        "source": "adsbfi",
+        "details": {
+          "observed_from": "2026-09-23T05:17:40.450Z",
+          "observed_to": "2026-09-23T05:19:10.495Z",
+          "samples": 4,
+          "direction_samples": 4,
+          "initial_altitude": 419.1,
+          "maximum_altitude": 1112.52,
+          "altitude_gain": 693.42,
+          "median_vertical_rate": 8.29056,
+          "longitude_delta": 0.05109600000000114,
+          "movement": "climbing"
+        }
+      },
+      {
+        "callsign": "UIA8759",
+        "detected_at": "2026-09-23T04:35:39.753Z",
+        "direction": "eastbound",
+        "runway_estimate": "10",
+        "detection_confidence": "high",
+        "source": "adsbfi",
+        "details": {
+          "observed_from": "2026-09-23T04:35:39.753Z",
+          "observed_to": "2026-09-23T04:37:09.764Z",
+          "samples": 4,
+          "direction_samples": 4,
+          "initial_altitude": 121.92,
+          "maximum_altitude": 1036.3200000000002,
+          "altitude_gain": 914.4000000000002,
+          "median_vertical_rate": 9.59104,
+          "longitude_delta": 0.05213400000000945,
+          "movement": "climbing"
+        }
+      },
       {
         "callsign": "CAL201",
         "detected_at": "2026-09-23T04:21:39.668Z",
@@ -191,56 +1052,56 @@
           "longitude_delta": 0.06684799999999314,
           "movement": "climbing"
         }
-      },
-      {
-        "callsign": "UIA8609",
-        "detected_at": "2026-09-23T02:53:21.801Z",
-        "direction": "eastbound",
-        "runway_estimate": "10",
-        "detection_confidence": "high",
-        "source": "adsbfi",
-        "details": {
-          "observed_from": "2026-09-23T02:53:21.801Z",
-          "observed_to": "2026-09-23T02:54:51.810Z",
-          "samples": 4,
-          "direction_samples": 4,
-          "initial_altitude": 266.7,
-          "maximum_altitude": 1150.6200000000001,
-          "altitude_gain": 883.9200000000001,
-          "median_vertical_rate": 8.128,
-          "longitude_delta": 0.06645899999999472,
-          "movement": "climbing"
-        }
-      },
-      {
-        "callsign": "MDA1265",
-        "detected_at": "2026-09-23T02:40:21.517Z",
-        "direction": "eastbound",
-        "runway_estimate": "10",
-        "detection_confidence": "high",
-        "source": "adsbfi",
-        "details": {
-          "observed_from": "2026-09-23T02:40:21.517Z",
-          "observed_to": "2026-09-23T02:41:51.523Z",
-          "samples": 4,
-          "direction_samples": 4,
-          "initial_altitude": 480.06,
-          "maximum_altitude": 922.0200000000001,
-          "altitude_gain": 441.9600000000001,
-          "median_vertical_rate": 5.20192,
-          "longitude_delta": 0.056744999999992274,
-          "movement": "climbing"
-        }
       }
     ]
   },
   "today": {
-    "total": 31,
-    "eastbound": 31,
+    "total": 33,
+    "eastbound": 33,
     "westbound": 0,
     "unknown": 0
   },
   "recentDepartures": [
+    {
+      "callsign": "UIA8725",
+      "detected_at": "2026-09-23T05:17:40.450Z",
+      "direction": "eastbound",
+      "runway_estimate": "10",
+      "detection_confidence": "high",
+      "source": "adsbfi",
+      "details": {
+        "observed_from": "2026-09-23T05:17:40.450Z",
+        "observed_to": "2026-09-23T05:19:10.495Z",
+        "samples": 4,
+        "direction_samples": 4,
+        "initial_altitude": 419.1,
+        "maximum_altitude": 1112.52,
+        "altitude_gain": 693.42,
+        "median_vertical_rate": 8.29056,
+        "longitude_delta": 0.05109600000000114,
+        "movement": "climbing"
+      }
+    },
+    {
+      "callsign": "UIA8759",
+      "detected_at": "2026-09-23T04:35:39.753Z",
+      "direction": "eastbound",
+      "runway_estimate": "10",
+      "detection_confidence": "high",
+      "source": "adsbfi",
+      "details": {
+        "observed_from": "2026-09-23T04:35:39.753Z",
+        "observed_to": "2026-09-23T04:37:09.764Z",
+        "samples": 4,
+        "direction_samples": 4,
+        "initial_altitude": 121.92,
+        "maximum_altitude": 1036.3200000000002,
+        "altitude_gain": 914.4000000000002,
+        "median_vertical_rate": 9.59104,
+        "longitude_delta": 0.05213400000000945,
+        "movement": "climbing"
+      }
+    },
     {
       "callsign": "CAL201",
       "detected_at": "2026-09-23T04:21:39.668Z",
@@ -398,46 +1259,6 @@
         "altitude_gain": 830.5799999999999,
         "median_vertical_rate": 7.965440000000001,
         "longitude_delta": 0.06684799999999314,
-        "movement": "climbing"
-      }
-    },
-    {
-      "callsign": "UIA8609",
-      "detected_at": "2026-09-23T02:53:21.801Z",
-      "direction": "eastbound",
-      "runway_estimate": "10",
-      "detection_confidence": "high",
-      "source": "adsbfi",
-      "details": {
-        "observed_from": "2026-09-23T02:53:21.801Z",
-        "observed_to": "2026-09-23T02:54:51.810Z",
-        "samples": 4,
-        "direction_samples": 4,
-        "initial_altitude": 266.7,
-        "maximum_altitude": 1150.6200000000001,
-        "altitude_gain": 883.9200000000001,
-        "median_vertical_rate": 8.128,
-        "longitude_delta": 0.06645899999999472,
-        "movement": "climbing"
-      }
-    },
-    {
-      "callsign": "MDA1265",
-      "detected_at": "2026-09-23T02:40:21.517Z",
-      "direction": "eastbound",
-      "runway_estimate": "10",
-      "detection_confidence": "high",
-      "source": "adsbfi",
-      "details": {
-        "observed_from": "2026-09-23T02:40:21.517Z",
-        "observed_to": "2026-09-23T02:41:51.523Z",
-        "samples": 4,
-        "direction_samples": 4,
-        "initial_altitude": 480.06,
-        "maximum_altitude": 922.0200000000001,
-        "altitude_gain": 441.9600000000001,
-        "median_vertical_rate": 5.20192,
-        "longitude_delta": 0.056744999999992274,
         "movement": "climbing"
       }
     }
