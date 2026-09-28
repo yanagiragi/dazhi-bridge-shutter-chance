@@ -42,7 +42,7 @@
 - 本機測試 URL：http://127.0.0.1:33081/。
 - 開始：2026-09-17 15:10 Asia/Taipei。
 - 完成：2026-09-18 15:12 Asia/Taipei，共 24 小時 1 分 46 秒。
-- 每 15 分鐘記錄 CPU、記憶體、SQLite bytes 與 status API 至 /tmp/dazhi-stage8-soak.log。
+- 每 15 分鐘記錄 CPU、記憶體、SQLite bytes 與 status API 至 <temporary-directory>/dazhi-stage8-soak.log。
 - tmux session：dazhi-stage8-soak-monitor（測試完成後已停止；應用容器保留供後續分析）。
 - 初始樣本：31.25 MiB RAM、0.00% CPU、SQLite main file 4,096 bytes、collector state ok。
 
@@ -55,7 +55,7 @@
 - 記憶體最小 31.25 MiB、最大 55.71 MiB、平均 50.49 MiB；CPU 最小 0.00%、最大瞬時 14.08%、平均 0.372%。絕對用量低且服務正常，但記憶體末值仍高於初值，正式部署後適合繼續觀察更長週期。
 - SQLite main file 從 4,096 bytes 成長至 282,624 bytes。WAL 檔在結束時約 4.13 MB，符合預設約 1,000 page checkpoint 尺寸；online backup 為約 280 KiB，因此後續容量監控應同時計入 main、WAL 與 SHM，而不能只看 main file。
 - Docker 使用 json-file、10 MB x 3 輪替設定；24 小時內未發生重啟、shutdown、uncaught exception 或 unhandled rejection。
-- 已建立 /tmp/dazhi-stage8-soak-final.sqlite 作為後續問題分析樣本；SQLite integrity_check 為 ok，包含 1,001 筆 observation 與 75 筆 departure。
+- 已建立 <temporary-directory>/dazhi-stage8-soak-final.sqlite 作為後續問題分析樣本；SQLite integrity_check 為 ok，包含 1,001 筆 observation 與 75 筆 departure。
 - 最終重新執行 32 項 node:test、ESLint、Docker Compose config 與 git diff check，全部通過。
 - 從已提交階段 8 程式的 HEAD `2077a61` 建立全新 local clone，以獨立 Compose project、port 與 volume 依 README 建置。容器達到 healthy、schema version 2、真實 adsb.fi 收集成功，health、status API 與網頁均正常；驗收後已移除隔離環境。
 
@@ -84,7 +84,7 @@ soak test 期間，網站曾將 `CAL261` 顯示為 `eastbound` departure。人�
 
 ## 階段 8.5：缺漏航班調查
 
-調查時間為 2026-09-18 22:26（Asia/Taipei）。官方基準使用松山機場國內線與國際線即時離站開放資料，並以 `/tmp/dazhi-stage8-soak-final.sqlite` 的完整 soak 備份核對。官方資料中的 `RealDepartureTime` 是作業離站時間，不等同 ADS-B 首次低空偵測時間，因此比對使用日期、master／codeshare 關係、ICAO operator code、航班號及後續起飛航跡，不要求分鐘完全相同。
+調查時間為 2026-09-18 22:26（Asia/Taipei）。官方基準使用松山機場國內線與國際線即時離站開放資料，並以 `<temporary-directory>/dazhi-stage8-soak-final.sqlite` 的完整 soak 備份核對。官方資料中的 `RealDepartureTime` 是作業離站時間，不等同 ADS-B 首次低空偵測時間，因此比對使用日期、master／codeshare 關係、ICAO operator code、航班號及後續起飛航跡，不要求分鐘完全相同。
 
 先前指定的 09:30–10:55 清單有 10 筆官方紀錄，但 `CI9220` 是 `JL096` 的 codeshare，實際為 9 架航機：
 

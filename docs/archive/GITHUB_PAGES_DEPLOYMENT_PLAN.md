@@ -1,6 +1,7 @@
-# GitHub Pages 無 API 部署規畫
+# GitHub Pages 無 API 部署規畫（歷史封存）
 
-> 狀態：核心實作與本機 gh-pages worktree 已完成；首次遠端 Pages 發布仍需部署者設定 fine-grained PAT、branch 與 Pages source。
+> 狀態：歷史封存。現行決策請見
+> [ADR-0007](../adr/0007-publish-static-snapshots-to-github-pages.md)，操作方式請見 repository 根目錄 README。
 
 ## 1. 結論
 

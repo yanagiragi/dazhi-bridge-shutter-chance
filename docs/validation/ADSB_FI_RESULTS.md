@@ -10,7 +10,7 @@
 - 查詢中心：RCSS，`25.069722, 121.5525`。
 - API 查詢半徑：25 NM；分析時在本地比較 3、5、10、25 NM，不額外發送請求。
 - 間隔：5 秒，共 360 次請求。
-- 暫存資料：`/tmp/adsbfi-rcss-validation-20260917.jsonl`，不提交原始航跡。
+- 暫存資料：`<temporary-directory>/adsbfi-rcss-validation-20260917.jsonl`，不提交原始航跡。
 
 ### API 可用性
 

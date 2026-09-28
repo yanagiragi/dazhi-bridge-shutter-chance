@@ -1,19 +1,18 @@
-# Provider validation tools and evidence
+# 資料來源驗證工具與證據
 
-This directory documents the bounded validation tools used for provider coverage,
-detector feasibility, and deployment verification. The tools under
-`scripts/validation/` are intentionally independent from the production collector.
+本目錄記錄用於驗證 provider 覆蓋率、detector 可行性及部署結果的有限範圍工具。
+`scripts/validation/` 下的工具刻意與正式環境 collector 分開。
 
-## Collect bounded samples
+## 收集有限數量的樣本
 
-Anonymous collection:
+匿名收集：
 
 ```sh
 node scripts/validation/collect-opensky.js --samples 20 --interval 30 \
   --output data/validation/observations.jsonl
 ```
 
-Authenticated collection:
+驗證身分後收集：
 
 ```sh
 export OPENSKY_CLIENT_ID='...'
@@ -22,44 +21,49 @@ node scripts/validation/collect-opensky.js --samples 20 --interval 30 \
   --output data/validation/observations.jsonl
 ```
 
-The program stops after the requested sample count. Credentials are read only from
-the environment and are not written to disk. Raw JSONL files under `data/validation/`
-are ignored by Git.
+程式會在完成指定的採樣數量後停止。Credential 只從環境變數讀取，不會寫入磁碟。
+`data/validation/` 下的原始 JSONL 檔案已由 Git 忽略。
 
-## Collect adsb.fi coverage samples
+## 收集 adsb.fi 覆蓋率樣本
 
-The adsb.fi validation collector defaults to a 25 NM query every five seconds so the analyzer can compare narrower radii without issuing additional API requests:
+adsb.fi 驗證 collector 預設每五秒查詢一次 25 NM 範圍，讓 analyzer 不必增加 API
+請求，即可比較較小半徑的結果：
 
 ```sh
 node scripts/validation/collect-adsbfi.js --samples 360 --interval 5 \
   --output data/validation/adsbfi-observations.jsonl
 ```
 
-The interval must be at least one second to respect the public endpoint rate limit. Analyze field coverage, position age, low-altitude observations and detector output at 3, 5, 10 and 25 NM:
+為遵守公開 endpoint 的 rate limit，間隔不得少於一秒。使用以下指令分析 3、5、
+10 與 25 NM 範圍的欄位完整率、位置資料時間差、低高度 observation 及 detector
+輸出：
 
 ```sh
 node scripts/validation/analyze-adsbfi.js data/validation/adsbfi-observations.jsonl
 ```
 
-A detected departure is only a candidate until it has been matched with an actual Songshan departure. A wide radius can include Taoyuan traffic and produce false positives. See [ADSB_FI_RESULTS.md](ADSB_FI_RESULTS.md) for reviewed observations and remaining acceptance work.
+偵測到的 departure 在與實際松山離站航班配對前只能視為候選事件。查詢半徑過大
+可能包含桃園機場航班並產生 false positive。人工審查結果與尚待完成的驗收工作請見
+[adsb.fi 松山低空覆蓋驗證](ADSB_FI_RESULTS.md)。
 
-## Summarize observed OpenSky tracks
+## 彙整觀測到的 OpenSky 航跡
 
 ```sh
 node scripts/validation/analyze-observations.js data/validation/observations.jsonl
 ```
 
-## Run the regression test
+## 執行 regression test
 
 ```sh
 node --test test/validation/analyze-observations.test.js
 ```
 
-See [OPENSKY_FEASIBILITY_RESULTS.md](OPENSKY_FEASIBILITY_RESULTS.md) for the reviewed phase 1 outcome and remaining limitation.
-The analyzer is deliberately a coarse feasibility heuristic, not the production
-departure detector. Candidate tracks still require manual validation before phase
-1 can pass.
+階段 1 的人工審查結果與其限制請見
+[OpenSky 可行性驗證結果](OPENSKY_FEASIBILITY_RESULTS.md)。Analyzer 刻意只使用
+粗略的可行性判定方式，並非正式環境的 departure detector。階段 1 通過前，候選
+航跡仍須經過人工驗證。
 
-## Deployment soak test
+## 部署 soak test
 
-See [STAGE8_RESULTS.md](STAGE8_RESULTS.md) for phase 8 Docker, restart, backup, schedule, and 24-hour soak-test evidence.
+階段 8 的 Docker、restart、backup、schedule 及 24 小時 soak test 證據請見
+[階段 8：長時間運作與部署驗證](STAGE8_RESULTS.md)。
