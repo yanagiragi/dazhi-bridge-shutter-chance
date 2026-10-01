@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-01T22:30:02.971Z",
-  "collectorLastSuccessAt": "2026-10-01T12:59:38.612Z",
-  "collectorStatus": "outside_schedule",
+  "generatedAt": "2026-10-01T23:00:02.796Z",
+  "collectorLastSuccessAt": "2026-10-01T22:59:49.454Z",
+  "collectorStatus": "active",
   "activeWindow": {
     "start": "06:30",
     "end": "21:00",
@@ -14,7 +14,7 @@
       "7": {
         "requestedDays": 7,
         "observedFrom": "2026-09-26",
-        "observedTo": "2026-10-01",
+        "observedTo": "2026-10-02",
         "totals": {
           "westbound": 183,
           "eastbound": 261,
@@ -25,10 +25,21 @@
         },
         "opportunityDays": {
           "westbound": 6,
-          "observed": 6,
-          "percentage": 100
+          "observed": 7,
+          "percentage": 85.7
         },
         "daily": [
+          {
+            "date": "2026-10-02",
+            "westbound": 0,
+            "eastbound": 0,
+            "unknown": 0,
+            "successfulRequests": 60,
+            "failedRequests": 0,
+            "total": 0,
+            "directional": 0,
+            "westboundPercentage": null
+          },
           {
             "date": "2026-10-01",
             "westbound": 2,
@@ -104,7 +115,7 @@
             "westbound": 0,
             "eastbound": 10,
             "unknown": 0,
-            "successfulRequests": 360,
+            "successfulRequests": 420,
             "failedRequests": 0,
             "total": 10,
             "directional": 10,
@@ -297,7 +308,7 @@
       "30": {
         "requestedDays": 30,
         "observedFrom": "2026-09-19",
-        "observedTo": "2026-10-01",
+        "observedTo": "2026-10-02",
         "totals": {
           "westbound": 188,
           "eastbound": 788,
@@ -308,10 +319,21 @@
         },
         "opportunityDays": {
           "westbound": 7,
-          "observed": 13,
-          "percentage": 53.8
+          "observed": 14,
+          "percentage": 50
         },
         "daily": [
+          {
+            "date": "2026-10-02",
+            "westbound": 0,
+            "eastbound": 0,
+            "unknown": 0,
+            "successfulRequests": 60,
+            "failedRequests": 0,
+            "total": 0,
+            "directional": 0,
+            "westboundPercentage": null
+          },
           {
             "date": "2026-10-01",
             "westbound": 2,
@@ -464,7 +486,7 @@
             "westbound": 0,
             "eastbound": 29,
             "unknown": 0,
-            "successfulRequests": 480,
+            "successfulRequests": 540,
             "failedRequests": 0,
             "total": 29,
             "directional": 29,
@@ -657,7 +679,7 @@
       "all": {
         "requestedDays": null,
         "observedFrom": "2026-09-19",
-        "observedTo": "2026-10-01",
+        "observedTo": "2026-10-02",
         "totals": {
           "westbound": 188,
           "eastbound": 788,
@@ -668,10 +690,21 @@
         },
         "opportunityDays": {
           "westbound": 7,
-          "observed": 13,
-          "percentage": 53.8
+          "observed": 14,
+          "percentage": 50
         },
         "daily": [
+          {
+            "date": "2026-10-02",
+            "westbound": 0,
+            "eastbound": 0,
+            "unknown": 0,
+            "successfulRequests": 60,
+            "failedRequests": 0,
+            "total": 0,
+            "directional": 0,
+            "westboundPercentage": null
+          },
           {
             "date": "2026-10-01",
             "westbound": 2,
@@ -824,7 +857,7 @@
             "westbound": 0,
             "eastbound": 29,
             "unknown": 0,
-            "successfulRequests": 480,
+            "successfulRequests": 540,
             "failedRequests": 0,
             "total": 29,
             "directional": 29,
@@ -1021,11 +1054,11 @@
   "advice": {
     "date": "2026-10-02",
     "timezone": "Asia/Taipei",
-    "freshness": "outside_schedule",
+    "freshness": "fresh",
     "recommendation": "insufficient-data",
     "confidence": "insufficient",
     "reason": "The collector is not fresh or has no departure data today",
-    "lastSuccessAt": "2026-10-01T12:59:38.612Z",
+    "lastSuccessAt": "2026-10-01T22:59:49.454Z",
     "collectionSchedule": {
       "timezone": "Asia/Taipei",
       "start": "06:30",
