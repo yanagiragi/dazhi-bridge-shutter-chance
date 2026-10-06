@@ -69,6 +69,19 @@ token。不要放入 command line、repository、`.env`、container 或 log。�
 `PAGES_ASKPASS_PATH` 指向只有服務帳號可讀的 askpass helper；helper 再讀取獨立
 的 `0600` PAT 檔案。
 
+自動 commit 預設使用獨立 identity，不沿用 repository 或 global Git config：
+
+| 變數 | 預設值 | 用途 |
+| --- | --- | --- |
+| `PAGES_GIT_AUTHOR_NAME` | `Dazhi Pages Publisher` | 自動發布 commit 的 author／committer name |
+| `PAGES_GIT_AUTHOR_EMAIL` | `dazhi-pages-publisher@example.invalid` | 未連結個人 GitHub 帳號的 author／committer email |
+
+這能避免未來的 `gh-pages` 自動 commit 被計入維護者 contribution graph；PAT 仍負責
+push，因此 repository activity 仍可能顯示 PAT 所屬帳號。若連 push actor 也要分離，需
+另行改用 GitHub App、專用帳號或 writable deploy key。不要使用已連結到個人 GitHub
+帳號的 email 覆寫 `PAGES_GIT_AUTHOR_EMAIL`。此設定不會修改 repository 或 global
+`user.name`／`user.email`。
+
 以下的 `OWNER/REPOSITORY` 與 `/path/to/...` 都是 placeholder，部署時才替換。
 
 目前 remote 若是 SSH，需由維護者自行切換：

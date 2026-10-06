@@ -26,6 +26,10 @@ Collector container 不取得 GitHub credential，也不存取 worktree。自動
 `flock` 與非互動 Git；先 `pull --ff-only`，只在輸出變更或 heartbeat 時 commit，
 永不 force-push。人工 `pages:sync` 只備份、匯出及驗證，不執行 Git 寫入。
 
+自動 commit 使用獨立且未連結維護者 GitHub 帳號的 author／committer email，並以
+`PAGES_GIT_AUTHOR_NAME`、`PAGES_GIT_AUTHOR_EMAIL` 開放覆寫；publisher 只對單次
+commit 傳入 identity，不修改 repository 或 global Git config。
+
 Pages 不提供 HTTP API；瀏覽器只讀取同站相對路徑的靜態 snapshot。自架版與 Pages
 共用 detector、advice 及 schema，但清楚顯示不同更新頻率與 stale 狀態。
 

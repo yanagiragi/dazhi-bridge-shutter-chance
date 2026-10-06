@@ -8,6 +8,20 @@ import { loadOperatorCatalog } from '../src/operator-catalog.js'
 const DEFAULT_WORKTREE_PATH = './worktree-pages'
 const DEFAULT_SNAPSHOT_PATH = './runtime/pages/status.json'
 
+// Automated Pages commits use an email that is intentionally not associated
+// with the maintainer's GitHub account, so deployments do not inflate the
+// maintainer's contribution graph.
+const DEFAULT_GIT_AUTHOR_NAME = 'Dazhi Pages Publisher'
+const DEFAULT_GIT_AUTHOR_EMAIL =
+    'dazhi-pages-publisher@example.invalid'
+
+function gitCommitIdentityArgs (name, email) {
+    return [
+        '-c', `user.name=${name}`,
+        '-c', `user.email=${email}`
+    ]
+}
+
 function git (worktreePath, args) {
     return execFileSync('git', ['-C', worktreePath, ...args], {
         encoding: 'utf8',
@@ -21,6 +35,8 @@ function publishPages ({
     publicPath = './public',
     operatorCatalogPath = './config/operators.json',
     commitMessage = 'chore: publish GitHub Pages snapshot',
+    gitAuthorName = DEFAULT_GIT_AUTHOR_NAME,
+    gitAuthorEmail = DEFAULT_GIT_AUTHOR_EMAIL,
     push = true
 } = {}) {
     const worktree = resolve(worktreePath)
@@ -63,7 +79,10 @@ function publishPages ({
     const status = git(worktree, ['status', '--short'])
     if (!status) return { changed: false, snapshot }
     git(worktree, ['add', 'operators.json', 'data/status.json', 'web-config.json'])
-    git(worktree, ['commit', '-m', commitMessage])
+    git(worktree, [
+        ...gitCommitIdentityArgs(gitAuthorName, gitAuthorEmail),
+        'commit', '-m', commitMessage
+    ])
     if (push) git(worktree, ['push', 'origin', 'gh-pages'])
     return { changed: true, snapshot }
 }
@@ -74,6 +93,10 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
         snapshotPath: process.env.STATIC_SNAPSHOT_PATH || DEFAULT_SNAPSHOT_PATH,
         publicPath: process.env.PUBLIC_PATH || './public',
         operatorCatalogPath: process.env.OPERATOR_CATALOG_PATH || './config/operators.json',
+        gitAuthorName: process.env.PAGES_GIT_AUTHOR_NAME ||
+            DEFAULT_GIT_AUTHOR_NAME,
+        gitAuthorEmail: process.env.PAGES_GIT_AUTHOR_EMAIL ||
+            DEFAULT_GIT_AUTHOR_EMAIL,
         push: process.env.PAGES_PUSH !== 'false'
     })
     console.log(JSON.stringify({
@@ -83,4 +106,11 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
     }))
 }
 
-export { DEFAULT_SNAPSHOT_PATH, DEFAULT_WORKTREE_PATH, publishPages }
+export {
+    DEFAULT_GIT_AUTHOR_EMAIL,
+    DEFAULT_GIT_AUTHOR_NAME,
+    DEFAULT_SNAPSHOT_PATH,
+    DEFAULT_WORKTREE_PATH,
+    gitCommitIdentityArgs,
+    publishPages
+}
