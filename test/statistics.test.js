@@ -65,3 +65,27 @@ test('historical statistics aggregate ranges, days, and local clock hours', () =
 
     database.close()
 })
+
+test('historical statistics cache invalidates after collector data changes', () => {
+    const database = new Database(':memory:')
+    applyMigrations(database)
+    const now = new Date('2026-09-23T08:00:00.000Z')
+    const options = {
+        database,
+        now,
+        timezone: 'Asia/Taipei',
+        schedule: { start: '06:30', end: '21:00' }
+    }
+
+    insertDeparture(database, '2026-09-23T06:30:00.000Z', 'westbound')
+    const first = buildHistoricalStatistics(options)
+    const cached = buildHistoricalStatistics(options)
+    assert.strictEqual(cached, first)
+
+    insertDeparture(database, '2026-09-23T06:40:00.000Z', 'eastbound')
+    const updated = buildHistoricalStatistics(options)
+    assert.notStrictEqual(updated, first)
+    assert.equal(updated.ranges.all.totals.directional, 2)
+
+    database.close()
+})

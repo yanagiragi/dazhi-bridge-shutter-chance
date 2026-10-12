@@ -5,17 +5,32 @@ const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
 const PERCENTAGE_PRECISION = 1
 const STATISTIC_RANGES = Object.freeze([7, 30, null])
 
+// Intl.DateTimeFormat is expensive to construct. Reuse one formatter for each
+// configured timezone instead of constructing one for every database row.
+const LOCAL_PARTS_FORMATTERS = new Map()
+
+// Keep only the latest result for each database connection. Collector writes
+// change the cache key, while the local date handles an otherwise idle midnight.
+const STATISTICS_CACHE = new WeakMap()
+
+function localPartsFormatter (timezone) {
+    if (!LOCAL_PARTS_FORMATTERS.has(timezone)) {
+        LOCAL_PARTS_FORMATTERS.set(timezone, new Intl.DateTimeFormat('en-CA', {
+            timeZone: timezone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            hourCycle: 'h23'
+        }))
+    }
+    return LOCAL_PARTS_FORMATTERS.get(timezone)
+}
+
 function localParts (value, timezone) {
     // en-CA requests stable numeric calendar parts; timezone determines the
     // date and hour used by statistics.
-    const parts = new Intl.DateTimeFormat('en-CA', {
-        timeZone: timezone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        hourCycle: 'h23'
-    }).formatToParts(new Date(value))
+    const parts = localPartsFormatter(timezone).formatToParts(new Date(value))
     const values = Object.fromEntries(parts
         .filter(part => part.type !== 'literal')
         .map(part => [part.type, part.value]))
@@ -105,54 +120,57 @@ function withinRange (dateKey, cutoff) {
     return cutoff === null || dateKey >= cutoff
 }
 
-function buildRange ({ departures, requests, now, timezone, schedule, days }) {
-    const cutoff = cutoffDateKey(now, timezone, days)
-    const daily = new Map()
-    const hourly = new Map(activeHourBuckets(schedule).map(bucket => [
-        bucket.hour,
-        {
-            ...bucket,
-            ...emptyCounts(),
-            successfulRequests: 0,
-            failedRequests: 0
-        }
-    ]))
-    const totals = emptyCounts()
-
-    function dayEntry (date) {
-        if (!daily.has(date)) {
-            daily.set(date, {
-                date,
+function createRange (now, timezone, schedule, days) {
+    return {
+        days,
+        cutoff: cutoffDateKey(now, timezone, days),
+        daily: new Map(),
+        hourly: new Map(activeHourBuckets(schedule).map(bucket => [
+            bucket.hour,
+            {
+                ...bucket,
                 ...emptyCounts(),
                 successfulRequests: 0,
                 failedRequests: 0
-            })
-        }
-        return daily.get(date)
+            }
+        ])),
+        totals: emptyCounts()
     }
+}
 
-    for (const departure of departures) {
-        const parts = localParts(departure.detected_at, timezone)
-        if (!withinRange(parts.date, cutoff)) continue
-        addDirection(totals, departure.direction)
-        addDirection(dayEntry(parts.date), departure.direction)
-        const hour = hourly.get(parts.hour)
-        if (hour) addDirection(hour, departure.direction)
+function dayEntry (range, date) {
+    if (!range.daily.has(date)) {
+        range.daily.set(date, {
+            date,
+            ...emptyCounts(),
+            successfulRequests: 0,
+            failedRequests: 0
+        })
     }
+    return range.daily.get(date)
+}
 
-    for (const request of requests) {
-        const parts = localParts(request.completed_at, timezone)
-        if (!withinRange(parts.date, cutoff)) continue
-        const day = dayEntry(parts.date)
-        const hour = hourly.get(parts.hour)
-        const key = request.state === 'ok'
-            ? 'successfulRequests'
-            : 'failedRequests'
-        day[key]++
-        if (hour) hour[key]++
-    }
+function addDeparture (range, departure, parts) {
+    if (!withinRange(parts.date, range.cutoff)) return
+    addDirection(range.totals, departure.direction)
+    addDirection(dayEntry(range, parts.date), departure.direction)
+    const hour = range.hourly.get(parts.hour)
+    if (hour) addDirection(hour, departure.direction)
+}
 
-    const daysWithCoverage = [...daily.values()].filter(day =>
+function addRequest (range, request, parts) {
+    if (!withinRange(parts.date, range.cutoff)) return
+    const day = dayEntry(range, parts.date)
+    const hour = range.hourly.get(parts.hour)
+    const key = request.state === 'ok'
+        ? 'successfulRequests'
+        : 'failedRequests'
+    day[key]++
+    if (hour) hour[key]++
+}
+
+function finishRange (range) {
+    const daysWithCoverage = [...range.daily.values()].filter(day =>
         day.successfulRequests > 0 ||
         day.westbound + day.eastbound + day.unknown > 0
     )
@@ -164,21 +182,62 @@ function buildRange ({ departures, requests, now, timezone, schedule, days }) {
         .sort()
 
     return {
-        requestedDays: days,
+        requestedDays: range.days,
         observedFrom: coverageDates[0] ?? null,
         observedTo: coverageDates.at(-1) ?? null,
-        totals: summarizeCounts(totals),
+        totals: summarizeCounts(range.totals),
         opportunityDays: {
             westbound: daysWithWestbound,
             observed: daysWithCoverage.length,
             percentage: percentage(daysWithWestbound, daysWithCoverage.length)
         },
-        daily: [...daily.values()]
+        daily: [...range.daily.values()]
             .map(day => ({ ...day, ...summarizeCounts(day) }))
             .sort((left, right) => right.date.localeCompare(left.date)),
-        hourly: [...hourly.values()]
+        hourly: [...range.hourly.values()]
             .map(hour => ({ ...hour, ...summarizeCounts(hour) }))
     }
+}
+
+function databaseFingerprint (database) {
+    const departures = database.prepare(`
+        SELECT COUNT(*) AS count, COALESCE(MAX(id), 0) AS maximumId,
+               MAX(detected_at) AS latestAt
+        FROM departures
+    `).get()
+    const requests = database.prepare(`
+        SELECT COUNT(*) AS count, COALESCE(MAX(id), 0) AS maximumId,
+               MAX(completed_at) AS latestAt
+        FROM collector_request_history
+    `).get()
+    const changes = database.prepare(`
+        SELECT total_changes() AS count
+    `).get()
+
+    return { departures, requests, changes: changes.count }
+}
+
+function cacheKey ({ database, now, timezone, schedule }) {
+    const fingerprint = databaseFingerprint(database)
+    const until = now.toISOString()
+    const latestAt = [
+        fingerprint.departures.latestAt,
+        fingerprint.requests.latestAt
+    ].filter(Boolean).sort().at(-1)
+    // Historical debug queries need their exact timestamp. A live query can be
+    // reused until data changes or the configured timezone reaches a new day.
+    const timeKey = latestAt && until < latestAt
+        ? until
+        : localParts(now, timezone).date
+
+    return JSON.stringify({
+        timezone,
+        schedule,
+        timeKey,
+        departures: fingerprint.departures,
+        requests: fingerprint.requests,
+        changes: fingerprint.changes
+    })
 }
 
 function buildHistoricalStatistics ({
@@ -187,25 +246,45 @@ function buildHistoricalStatistics ({
     timezone = 'Asia/Taipei',
     schedule = { start: '06:30', end: '21:00' }
 }) {
+    const key = cacheKey({ database, now, timezone, schedule })
+    const cached = STATISTICS_CACHE.get(database)
+    if (cached?.key === key) return cached.value
+
     const until = now.toISOString()
     const departures = database.prepare(`
         SELECT detected_at, direction
         FROM departures
         WHERE detected_at <= ?
-        ORDER BY detected_at
     `).all(until)
     const requests = database.prepare(`
         SELECT completed_at, state
         FROM collector_request_history
         WHERE completed_at <= ?
-        ORDER BY completed_at
     `).all(until)
-    const ranges = Object.fromEntries(STATISTIC_RANGES.map(days => [
-        days === null ? 'all' : String(days),
-        buildRange({ departures, requests, now, timezone, schedule, days })
-    ]))
+    const ranges = STATISTIC_RANGES.map(days =>
+        createRange(now, timezone, schedule, days)
+    )
 
-    return { timezone, ranges }
+    // Convert each timestamp to local calendar parts once, then update all
+    // requested time ranges in the same pass.
+    for (const departure of departures) {
+        const parts = localParts(departure.detected_at, timezone)
+        for (const range of ranges) addDeparture(range, departure, parts)
+    }
+    for (const request of requests) {
+        const parts = localParts(request.completed_at, timezone)
+        for (const range of ranges) addRequest(range, request, parts)
+    }
+
+    const value = {
+        timezone,
+        ranges: Object.fromEntries(ranges.map(range => [
+            range.days === null ? 'all' : String(range.days),
+            finishRange(range)
+        ]))
+    }
+    STATISTICS_CACHE.set(database, { key, value })
+    return value
 }
 
 export {
