@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-25T00:30:03.614Z",
-  "collectorLastSuccessAt": "2026-10-25T00:29:38.055Z",
+  "generatedAt": "2026-10-25T01:00:03.295Z",
+  "collectorLastSuccessAt": "2026-10-25T00:59:39.021Z",
   "collectorStatus": "active",
   "activeWindow": {
     "start": "06:30",
@@ -17,10 +17,10 @@
         "observedTo": "2026-10-25",
         "totals": {
           "westbound": 21,
-          "eastbound": 307,
+          "eastbound": 308,
           "unknown": 0,
-          "total": 328,
-          "directional": 328,
+          "total": 329,
+          "directional": 329,
           "westboundPercentage": 6.4
         },
         "opportunityDays": {
@@ -32,12 +32,12 @@
           {
             "date": "2026-10-25",
             "westbound": 0,
-            "eastbound": 11,
+            "eastbound": 12,
             "unknown": 0,
-            "successfulRequests": 240,
+            "successfulRequests": 300,
             "failedRequests": 0,
-            "total": 11,
-            "directional": 11,
+            "total": 12,
+            "directional": 12,
             "westboundPercentage": 0
           },
           {
@@ -139,12 +139,12 @@
             "start": "08:00",
             "end": "09:00",
             "westbound": 0,
-            "eastbound": 26,
+            "eastbound": 27,
             "unknown": 0,
-            "successfulRequests": 780,
+            "successfulRequests": 840,
             "failedRequests": 0,
-            "total": 26,
-            "directional": 26,
+            "total": 27,
+            "directional": 27,
             "westboundPercentage": 0
           },
           {
@@ -311,10 +311,10 @@
         "observedTo": "2026-10-25",
         "totals": {
           "westbound": 219,
-          "eastbound": 1798,
+          "eastbound": 1799,
           "unknown": 0,
-          "total": 2017,
-          "directional": 2017,
+          "total": 2018,
+          "directional": 2018,
           "westboundPercentage": 10.9
         },
         "opportunityDays": {
@@ -326,12 +326,12 @@
           {
             "date": "2026-10-25",
             "westbound": 0,
-            "eastbound": 11,
+            "eastbound": 12,
             "unknown": 0,
-            "successfulRequests": 240,
+            "successfulRequests": 300,
             "failedRequests": 0,
-            "total": 11,
-            "directional": 11,
+            "total": 12,
+            "directional": 12,
             "westboundPercentage": 0
           },
           {
@@ -686,12 +686,12 @@
             "start": "08:00",
             "end": "09:00",
             "westbound": 0,
-            "eastbound": 131,
+            "eastbound": 132,
             "unknown": 0,
-            "successfulRequests": 3527,
+            "successfulRequests": 3587,
             "failedRequests": 19,
-            "total": 131,
-            "directional": 131,
+            "total": 132,
+            "directional": 132,
             "westboundPercentage": 0
           },
           {
@@ -858,10 +858,10 @@
         "observedTo": "2026-10-25",
         "totals": {
           "westbound": 224,
-          "eastbound": 2325,
+          "eastbound": 2326,
           "unknown": 0,
-          "total": 2549,
-          "directional": 2549,
+          "total": 2550,
+          "directional": 2550,
           "westboundPercentage": 8.8
         },
         "opportunityDays": {
@@ -873,12 +873,12 @@
           {
             "date": "2026-10-25",
             "westbound": 0,
-            "eastbound": 11,
+            "eastbound": 12,
             "unknown": 0,
-            "successfulRequests": 240,
+            "successfulRequests": 300,
             "failedRequests": 0,
-            "total": 11,
-            "directional": 11,
+            "total": 12,
+            "directional": 12,
             "westboundPercentage": 0
           },
           {
@@ -1310,12 +1310,12 @@
             "start": "08:00",
             "end": "09:00",
             "westbound": 0,
-            "eastbound": 161,
+            "eastbound": 162,
             "unknown": 0,
-            "successfulRequests": 3767,
+            "successfulRequests": 3827,
             "failedRequests": 19,
-            "total": 161,
-            "directional": 161,
+            "total": 162,
+            "directional": 162,
             "westboundPercentage": 0
           },
           {
@@ -1487,7 +1487,7 @@
     "recommendation": "low-opportunity",
     "confidence": "low",
     "reason": "The latest departure was not westbound or there is only one directional sample",
-    "lastSuccessAt": "2026-10-25T00:29:38.055Z",
+    "lastSuccessAt": "2026-10-25T00:59:39.021Z",
     "collectionSchedule": {
       "timezone": "Asia/Taipei",
       "start": "06:30",
@@ -1496,29 +1496,49 @@
       "nextStartAt": null
     },
     "today": {
-      "total": 11,
-      "eastbound": 11,
+      "total": 12,
+      "eastbound": 12,
       "westbound": 0,
       "unknown": 0
     },
     "recentDepartures": [
       {
+        "callsign": "UIA8607",
+        "detected_at": "2026-10-25T00:40:38.021Z",
+        "direction": "eastbound",
+        "runway_estimate": "10",
+        "detection_confidence": "high",
+        "source": "adsbfi",
+        "details": {
+          "observed_from": "2026-10-25T00:40:38.021Z",
+          "observed_to": "2026-10-25T00:41:38.065Z",
+          "samples": 3,
+          "direction_samples": 3,
+          "initial_altitude": 411.48,
+          "maximum_altitude": 746.76,
+          "altitude_gain": 335.28,
+          "median_vertical_rate": 5.20192,
+          "longitude_delta": 0.0365939999999938,
+          "movement": "climbing"
+        }
+      },
+      {
         "callsign": "MDA365",
         "detected_at": "2026-10-25T00:29:07.692Z",
         "direction": "eastbound",
         "runway_estimate": "10",
-        "detection_confidence": "medium",
+        "detection_confidence": "high",
         "source": "adsbfi",
         "details": {
           "observed_from": "2026-10-25T00:29:07.692Z",
-          "observed_to": "2026-10-25T00:29:37.706Z",
-          "samples": 2,
-          "direction_samples": 2,
+          "observed_to": "2026-10-25T00:30:37.733Z",
+          "samples": 4,
+          "direction_samples": 4,
           "initial_altitude": 327.66,
-          "maximum_altitude": 601.98,
-          "altitude_gain": 274.32,
-          "median_vertical_rate": 8.45312,
-          "longitude_delta": 0.01770100000000241,
+          "maximum_altitude": 975.36,
+          "altitude_gain": 647.7,
+          "median_vertical_rate": 7.80288,
+          "longitude_delta": 0.05555400000000077,
           "movement": "climbing"
         }
       },
@@ -1681,53 +1701,53 @@
           "longitude_delta": 0.06379299999998977,
           "movement": "climbing"
         }
-      },
-      {
-        "callsign": "UIA8751",
-        "detected_at": "2026-10-24T22:46:06.547Z",
-        "direction": "eastbound",
-        "runway_estimate": "10",
-        "detection_confidence": "high",
-        "source": "adsbfi",
-        "details": {
-          "observed_from": "2026-10-24T22:46:06.547Z",
-          "observed_to": "2026-10-24T22:47:36.591Z",
-          "samples": 4,
-          "direction_samples": 4,
-          "initial_altitude": 213.36,
-          "maximum_altitude": 944.88,
-          "altitude_gain": 731.52,
-          "median_vertical_rate": 8.128,
-          "longitude_delta": 0.06125400000000525,
-          "movement": "climbing"
-        }
       }
     ]
   },
   "today": {
-    "total": 11,
-    "eastbound": 11,
+    "total": 12,
+    "eastbound": 12,
     "westbound": 0,
     "unknown": 0
   },
   "recentDepartures": [
     {
+      "callsign": "UIA8607",
+      "detected_at": "2026-10-25T00:40:38.021Z",
+      "direction": "eastbound",
+      "runway_estimate": "10",
+      "detection_confidence": "high",
+      "source": "adsbfi",
+      "details": {
+        "observed_from": "2026-10-25T00:40:38.021Z",
+        "observed_to": "2026-10-25T00:41:38.065Z",
+        "samples": 3,
+        "direction_samples": 3,
+        "initial_altitude": 411.48,
+        "maximum_altitude": 746.76,
+        "altitude_gain": 335.28,
+        "median_vertical_rate": 5.20192,
+        "longitude_delta": 0.0365939999999938,
+        "movement": "climbing"
+      }
+    },
+    {
       "callsign": "MDA365",
       "detected_at": "2026-10-25T00:29:07.692Z",
       "direction": "eastbound",
       "runway_estimate": "10",
-      "detection_confidence": "medium",
+      "detection_confidence": "high",
       "source": "adsbfi",
       "details": {
         "observed_from": "2026-10-25T00:29:07.692Z",
-        "observed_to": "2026-10-25T00:29:37.706Z",
-        "samples": 2,
-        "direction_samples": 2,
+        "observed_to": "2026-10-25T00:30:37.733Z",
+        "samples": 4,
+        "direction_samples": 4,
         "initial_altitude": 327.66,
-        "maximum_altitude": 601.98,
-        "altitude_gain": 274.32,
-        "median_vertical_rate": 8.45312,
-        "longitude_delta": 0.01770100000000241,
+        "maximum_altitude": 975.36,
+        "altitude_gain": 647.7,
+        "median_vertical_rate": 7.80288,
+        "longitude_delta": 0.05555400000000077,
         "movement": "climbing"
       }
     },
@@ -1888,26 +1908,6 @@
         "altitude_gain": 746.7600000000001,
         "median_vertical_rate": 8.45312,
         "longitude_delta": 0.06379299999998977,
-        "movement": "climbing"
-      }
-    },
-    {
-      "callsign": "UIA8751",
-      "detected_at": "2026-10-24T22:46:06.547Z",
-      "direction": "eastbound",
-      "runway_estimate": "10",
-      "detection_confidence": "high",
-      "source": "adsbfi",
-      "details": {
-        "observed_from": "2026-10-24T22:46:06.547Z",
-        "observed_to": "2026-10-24T22:47:36.591Z",
-        "samples": 4,
-        "direction_samples": 4,
-        "initial_altitude": 213.36,
-        "maximum_altitude": 944.88,
-        "altitude_gain": 731.52,
-        "median_vertical_rate": 8.128,
-        "longitude_delta": 0.06125400000000525,
         "movement": "climbing"
       }
     }
